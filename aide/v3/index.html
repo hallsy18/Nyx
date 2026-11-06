@@ -1,0 +1,1618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="theme-color" content="#f7f6f3" />
+<title>Aide — v3</title>
+<style>
+  :root {
+    --bg: #f7f6f3;
+    --surface: #ffffff;
+    --ink: #1c1c1a;
+    --ink-soft: #6b6a66;
+    --ink-faint: #a8a69f;
+    --line: rgba(28,28,26,0.08);
+    --accent: #2a2a28;
+    --chip: #efeee9;
+    --chip-active: #1c1c1a;
+    --chip-active-ink: #f7f6f3;
+    --green: #2f6b4f;
+    --warm: #c4a484;
+    --shadow: 0 8px 28px rgba(28,28,26,0.08);
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --morph: 320ms cubic-bezier(.2,.8,.2,1);
+  }
+  body.rough {
+    --bg: #f3ebe3;
+    --surface: #fffaf5;
+    --ink: #3a322c;
+    --ink-soft: #7a6d62;
+    --ink-faint: #b0a194;
+    --line: rgba(58,50,44,0.08);
+    --accent: #5c4a3a;
+    --chip: #ebe0d4;
+    --green: #5a7a5a;
+    --shadow: 0 8px 28px rgba(58,50,44,0.08);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    background: var(--bg); color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    overflow: hidden;
+    transition: background .6s ease, color .6s ease;
+  }
+  body { display: flex; justify-content: center; align-items: stretch; }
+  .phone {
+    width: 100%; max-width: 430px; height: 100%;
+    display: flex; flex-direction: column;
+    position: relative; background: var(--bg);
+    overflow: hidden; transition: background .6s ease;
+  }
+
+  .topbar {
+    flex: 0 0 auto;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: calc(10px + var(--safe-top)) 14px 6px;
+    z-index: 30; position: relative;
+  }
+  .icon-btn {
+    width: 44px; height: 44px; border: 0; background: transparent;
+    border-radius: 12px; display: grid; place-items: center; cursor: pointer;
+    color: var(--ink);
+  }
+  .icon-btn:active { background: var(--line); }
+  .icon-btn svg { width: 22px; height: 22px; }
+  .icon-btn.back { opacity: 0; pointer-events: none; transition: opacity .2s; }
+  .icon-btn.back.show { opacity: 1; pointer-events: auto; }
+  .brand {
+    font-size: 15px; font-weight: 560; letter-spacing: -0.01em;
+    color: var(--ink-soft); opacity: 0.7;
+  }
+
+  .stage {
+    flex: 1 1 auto; position: relative; overflow: hidden; min-height: 0;
+  }
+  .pins {
+    position: absolute; top: 0; left: 0; right: 0;
+    display: flex; gap: 10px; padding: 4px 16px 8px;
+    overflow-x: auto; scrollbar-width: none; z-index: 15; pointer-events: none;
+  }
+  .pins::-webkit-scrollbar { display: none; }
+  .pins:empty { display: none; }
+  .pins > * { pointer-events: auto; }
+  .pin-card {
+    flex: 0 0 auto; background: var(--surface); border: 1px solid var(--line);
+    border-radius: 16px; padding: 12px 14px; min-width: 124px; max-width: 168px;
+    box-shadow: 0 2px 10px rgba(28,28,26,0.04); cursor: pointer; transition: transform .15s;
+  }
+  .pin-card:active { transform: scale(0.97); }
+  .pin-card .pc-icon { font-size: 20px; line-height: 1; margin-bottom: 6px; }
+  .pin-card .pc-title { font-size: 12px; color: var(--ink-soft); font-weight: 500; }
+  .pin-card .pc-body { font-size: 15px; font-weight: 560; letter-spacing: -0.02em; margin-top: 2px; }
+  .pin-card .pc-sub { font-size: 12px; color: var(--ink-faint); margin-top: 2px; }
+
+  .view {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 24px 28px 16px;
+    opacity: 0; transform: translateY(10px) scale(0.985);
+    pointer-events: none;
+    transition: opacity var(--morph), transform var(--morph);
+    will-change: opacity, transform; overflow-y: auto;
+  }
+  .view.active { opacity: 1; transform: none; pointer-events: auto; }
+  .view.exit-up { opacity: 0; transform: translateY(-12px) scale(0.99); }
+
+  .home-hints {
+    position: absolute; left: 28px; right: 28px; bottom: 12px;
+    display: flex; flex-direction: column; gap: 6px;
+    opacity: 0.42; pointer-events: none;
+  }
+  .home-hints .hint { font-size: 13px; color: var(--ink-soft); letter-spacing: -0.01em; }
+  .home-hints em { font-style: normal; color: var(--ink-faint); }
+
+  .hero-art {
+    width: min(220px, 56vw); height: min(160px, 40vw);
+    display: grid; place-items: center; margin-bottom: 28px;
+  }
+  .hero-art .emoji { font-size: 88px; line-height: 1; filter: saturate(0.92); }
+  .modem-svg { width: 180px; height: 140px; }
+  .q {
+    font-size: 26px; font-weight: 650; letter-spacing: -0.035em;
+    text-align: center; line-height: 1.2; max-width: 320px; margin: 0 0 10px;
+  }
+  .sub {
+    font-size: 15px; color: var(--ink-soft); text-align: center;
+    line-height: 1.4; max-width: 300px; margin: 0 0 28px;
+  }
+  .choices {
+    display: flex; flex-direction: column; gap: 10px; width: min(300px, 100%);
+  }
+  .choice {
+    min-height: 52px; border: 1px solid var(--line);
+    background: var(--surface); border-radius: 16px;
+    font-size: 17px; font-weight: 560; letter-spacing: -0.02em;
+    color: var(--ink); cursor: pointer; font-family: inherit;
+    box-shadow: 0 1px 3px rgba(28,28,26,0.04);
+    transition: transform .12s, background .15s;
+  }
+  .choice:active { transform: scale(0.98); }
+  .choice.primary { background: var(--accent); color: #faf9f6; border-color: transparent; }
+  .choice.row { display: flex; align-items: center; justify-content: center; gap: 10px; }
+  .choice.soft { font-size: 15px; min-height: 46px; color: var(--ink-soft); }
+
+  .order-card, .task-card, .learn-card, .weather-card, .done-hero, .cal-card, .draft-card, .info-card {
+    width: min(320px, 100%);
+  }
+  .order-card, .cal-card, .draft-card, .info-card {
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: 24px; overflow: hidden;
+    box-shadow: 0 8px 32px rgba(28,28,26,0.08); margin-bottom: 18px;
+  }
+  .order-photo {
+    height: 180px; display: grid; place-items: center;
+    background: linear-gradient(150deg, #e6e3da, #f4f2ec); font-size: 72px;
+  }
+  .order-meta, .cal-meta, .draft-meta, .info-meta { padding: 18px 20px 16px; }
+  .order-meta .t, .cal-meta .t, .draft-meta .t, .info-meta .t {
+    font-size: 18px; font-weight: 650; letter-spacing: -0.02em;
+  }
+  .order-meta .s, .cal-meta .s, .draft-meta .s, .info-meta .s {
+    font-size: 14px; color: var(--ink-soft); margin-top: 4px; line-height: 1.4;
+  }
+  .cal-photo {
+    height: 120px; display: grid; place-items: center;
+    background: linear-gradient(150deg, #dde8f0, #f0f4f7); font-size: 56px;
+  }
+  .info-photo {
+    height: 140px; display: grid; place-items: center;
+    background: linear-gradient(150deg, #e8efe6, #f4f7f2); font-size: 64px;
+  }
+  .symptom-list {
+    margin: 0; padding: 0 20px 16px 36px; color: var(--ink-soft); font-size: 14px; line-height: 1.55;
+  }
+  .draft-body {
+    margin: 0 20px 16px; padding: 14px 16px; background: var(--bg);
+    border-radius: 14px; font-size: 14px; color: var(--ink); line-height: 1.5;
+    white-space: pre-wrap;
+  }
+  .comment-row {
+    display: flex; gap: 8px; width: min(320px, 100%); margin-top: 4px; margin-bottom: 12px;
+  }
+  .comment-row input {
+    flex: 1; border: 1px solid var(--line); background: var(--surface);
+    border-radius: 14px; padding: 12px 14px; font-size: 15px; font-family: inherit;
+    color: var(--ink); outline: none;
+  }
+  .comment-row .send-mini {
+    width: 44px; height: 44px; border: 0; border-radius: 50%;
+    background: var(--accent); color: #fff; display: grid; place-items: center; cursor: pointer; flex: 0 0 auto;
+  }
+  .comment-row .send-mini svg { width: 16px; height: 16px; }
+  .saved-note {
+    width: min(320px, 100%); font-size: 13px; color: var(--green);
+    background: rgba(47,107,79,0.08); border-radius: 12px; padding: 10px 14px; margin-bottom: 12px;
+  }
+
+  .done-hero { text-align: center; }
+  .done-hero .check {
+    width: 72px; height: 72px; border-radius: 50%;
+    background: rgba(47,107,79,0.12); color: var(--green);
+    display: grid; place-items: center; margin: 0 auto 18px;
+  }
+  .done-hero .check svg { width: 34px; height: 34px; }
+  .done-hero .t { font-size: 24px; font-weight: 650; letter-spacing: -0.03em; }
+  .done-hero .s { font-size: 15px; color: var(--ink-soft); margin-top: 8px; }
+  .weather-card { text-align: center; }
+  .weather-card .deg { font-size: 72px; font-weight: 300; letter-spacing: -0.04em; line-height: 1; }
+  .weather-card .cond { font-size: 20px; font-weight: 560; margin-top: 4px; }
+  .weather-card .loc { font-size: 14px; color: var(--ink-soft); margin-top: 8px; }
+  .learn-pill, .tiny-done {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: 14px; padding: 12px 16px; font-size: 14px; color: var(--green); font-weight: 560;
+  }
+  .learn-pill { margin-top: 18px; }
+  .tiny-done { font-size: 15px; }
+
+  .unfinished-list, .priority-list {
+    width: min(340px, 100%); display: flex; flex-direction: column; gap: 12px;
+    max-height: 100%; overflow-y: auto; padding: 8px 0;
+  }
+  .uf-item, .pr-item {
+    display: flex; gap: 14px; align-items: center;
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: 18px; padding: 14px 16px; text-align: left;
+    cursor: pointer; font-family: inherit; color: inherit; width: 100%;
+    box-shadow: 0 2px 10px rgba(28,28,26,0.04);
+  }
+  .uf-item:active, .pr-item:active { transform: scale(0.98); }
+  .uf-icon, .pr-icon {
+    width: 48px; height: 48px; border-radius: 14px;
+    background: var(--chip); display: grid; place-items: center; font-size: 24px; flex: 0 0 auto;
+  }
+  .uf-body, .pr-body { flex: 1; min-width: 0; }
+  .uf-body .t, .pr-body .t { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
+  .uf-body .s, .pr-body .s { font-size: 13px; color: var(--ink-soft); margin-top: 2px; }
+
+  .tv-row {
+    display: flex; gap: 10px; width: min(340px, 100%); max-width: 340px; justify-content: center;
+    overflow-x: auto; padding: 4px 2px 12px; scrollbar-width: none;
+  }
+  .tv-row::-webkit-scrollbar { display: none; }
+  .tv-card {
+    flex: 0 0 104px; background: var(--surface); border: 1px solid var(--line);
+    border-radius: 18px; overflow: hidden; text-align: left;
+    box-shadow: 0 4px 16px rgba(28,28,26,0.06); cursor: pointer;
+  }
+  .tv-card:active { transform: scale(0.97); }
+  .tv-art {
+    height: 90px; display: grid; place-items: center; font-size: 36px;
+  }
+  .tv-art.a { background: linear-gradient(145deg, #1a1a2e, #3d3d5c); }
+  .tv-art.b { background: linear-gradient(145deg, #0f2027, #2c5364); }
+  .tv-art.c { background: linear-gradient(145deg, #232526, #414345); }
+  .tv-meta { padding: 10px 12px 12px; }
+  .tv-meta .name { font-size: 12px; font-weight: 650; letter-spacing: -0.02em; line-height: 1.25; }
+  .tv-meta .price { font-size: 15px; font-weight: 600; margin-top: 4px; }
+  .tv-meta .tag { font-size: 11px; color: var(--ink-faint); margin-top: 3px; }
+  .example-badge {
+    font-size: 11px; color: var(--ink-faint); text-align: center; margin-bottom: 10px; letter-spacing: 0.02em;
+  }
+
+  .quiet-state { text-align: center; max-width: 280px; }
+  .quiet-state .orb {
+    width: 64px; height: 64px; border-radius: 50%; margin: 0 auto 22px;
+    background: radial-gradient(circle at 40% 35%, rgba(28,28,26,0.06), transparent 70%);
+    border: 1px solid var(--line); display: grid; place-items: center;
+  }
+  .quiet-state .orb span { width: 10px; height: 10px; border-radius: 50%; background: var(--ink-faint); opacity: 0.5; }
+  .quiet-state .t { font-size: 20px; font-weight: 600; letter-spacing: -0.02em; }
+  .quiet-state .s { font-size: 15px; color: var(--ink-soft); margin-top: 8px; line-height: 1.4; }
+
+  .night-card {
+    width: min(320px, 100%); background: var(--surface); border: 1px solid var(--line);
+    border-radius: 22px; padding: 22px 20px; text-align: left;
+    box-shadow: 0 8px 28px rgba(28,28,26,0.06);
+  }
+  .night-card .rule { font-size: 15px; font-weight: 600; margin-bottom: 14px; }
+  .night-row {
+    display: flex; gap: 12px; align-items: flex-start; padding: 10px 0;
+    border-top: 1px solid var(--line); font-size: 14px;
+  }
+  .night-row .dot {
+    width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; flex: 0 0 auto;
+  }
+  .night-row .dot.hold { background: var(--ink-faint); }
+  .night-row .dot.ping { background: var(--green); }
+  .night-row .lbl { color: var(--ink); font-weight: 560; }
+  .night-row .why { color: var(--ink-soft); margin-top: 2px; font-size: 13px; }
+
+  .mood-banner {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(196,164,132,0.18); color: #6b5340;
+    border-radius: 14px; padding: 10px 14px; font-size: 13px; font-weight: 560; margin-bottom: 18px;
+  }
+
+  .swipe-hint {
+    position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
+    width: 36px; height: 4px; border-radius: 4px; background: var(--line);
+    opacity: 0; transition: opacity .2s;
+  }
+  .view.active .swipe-hint { opacity: 1; }
+
+  .composer-wrap {
+    flex: 0 0 auto;
+    padding: 8px 16px calc(14px + var(--safe-bottom));
+    background: linear-gradient(to top, var(--bg) 75%, transparent);
+    z-index: 40; position: relative; transition: background .6s ease;
+  }
+  .status-line {
+    font-size: 12px; color: var(--ink-faint); text-align: center;
+    padding: 0 8px 6px; min-height: 0;
+  }
+  .composer {
+    display: flex; align-items: flex-end; gap: 8px;
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: 24px; padding: 6px 6px 6px 18px;
+    box-shadow: var(--shadow);
+    transition: box-shadow .2s, border-color .2s, background .6s ease;
+  }
+  .composer.thinking { animation: softglow 1.6s ease-in-out infinite; }
+  .composer input {
+    flex: 1; border: 0; outline: none; background: transparent;
+    font-size: 16px; line-height: 1.3; padding: 10px 0;
+    color: var(--ink); font-family: inherit; min-height: 44px;
+  }
+  .composer input::placeholder { color: var(--ink-faint); }
+  .send {
+    width: 44px; height: 44px; border: 0; border-radius: 50%;
+    background: var(--accent); color: #fff;
+    display: grid; place-items: center; cursor: pointer; flex: 0 0 auto;
+  }
+  .send:disabled { opacity: 0.35; }
+  .send svg { width: 18px; height: 18px; }
+
+  .scrim {
+    position: absolute; inset: 0; background: rgba(28,28,26,0.28);
+    opacity: 0; pointer-events: none; transition: opacity .25s; z-index: 50;
+  }
+  .scrim.open { opacity: 1; pointer-events: auto; }
+  .drawer {
+    position: absolute; top: 0; left: 0; bottom: 0;
+    width: min(86%, 340px); background: var(--surface);
+    border-right: 1px solid var(--line);
+    transform: translateX(-105%);
+    transition: transform .3s cubic-bezier(.2,.8,.2,1);
+    z-index: 60; display: flex; flex-direction: column;
+    padding-top: var(--safe-top);
+    box-shadow: 8px 0 40px rgba(28,28,26,0.12);
+  }
+  .drawer.open { transform: translateX(0); }
+  .drawer-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 16px 8px 20px;
+  }
+  .drawer-head h2 { margin: 0; font-size: 20px; font-weight: 650; letter-spacing: -0.03em; }
+  .drawer-note { padding: 0 20px 12px; font-size: 13px; color: var(--ink-soft); line-height: 1.4; }
+  .drawer-scroll { flex: 1; overflow-y: auto; padding: 4px 14px 24px; }
+  .section-label {
+    font-size: 12px; font-weight: 600; color: var(--ink-faint);
+    letter-spacing: 0.04em; text-transform: uppercase; margin: 14px 6px 8px;
+  }
+  .widget-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .wcard {
+    position: relative; background: var(--bg); border: 1px solid var(--line);
+    border-radius: 16px; padding: 14px 12px 12px; min-height: 108px;
+    cursor: pointer; text-align: left; font-family: inherit; color: inherit;
+  }
+  .wcard.on { border-color: rgba(28,28,26,0.35); background: #fff; box-shadow: 0 2px 10px rgba(28,28,26,0.06); }
+  .wcard .wi { font-size: 26px; margin-bottom: 10px; display: block; }
+  .wcard .wt { font-size: 14px; font-weight: 600; letter-spacing: -0.01em; }
+  .wcard .ws { font-size: 11px; color: var(--ink-soft); margin-top: 3px; line-height: 1.3; }
+  .wcard .badge {
+    position: absolute; top: 10px; right: 10px; width: 22px; height: 22px;
+    border-radius: 50%; background: var(--accent); color: #fff;
+    display: none; place-items: center; font-size: 12px;
+  }
+  .wcard.on .badge { display: grid; }
+  .active-list { display: flex; flex-direction: column; gap: 6px; }
+  .active-row {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--bg); border-radius: 12px; padding: 10px 12px; border: 1px solid var(--line);
+  }
+  .active-row .n { flex: 1; font-size: 14px; font-weight: 500; }
+  .active-row .x {
+    width: 36px; height: 36px; border: 0; background: transparent;
+    border-radius: 10px; color: var(--ink-soft); cursor: pointer; font-size: 18px;
+  }
+  .demo-list { display: flex; flex-direction: column; gap: 6px; }
+  .demo-btn {
+    display: flex; align-items: center; gap: 10px; width: 100%;
+    background: var(--bg); border: 1px solid var(--line); border-radius: 12px;
+    padding: 11px 12px; text-align: left; font-family: inherit; color: inherit; cursor: pointer;
+  }
+  .demo-btn:active { transform: scale(0.98); }
+  .demo-btn .dn { font-size: 12px; font-weight: 700; color: var(--ink-faint); width: 22px; }
+  .demo-btn .dt { font-size: 13px; font-weight: 560; letter-spacing: -0.01em; }
+
+  /* Face ID lock */
+  .faceid {
+    position: absolute; inset: 0; z-index: 100;
+    background: #0c0c0b; color: #f7f6f3;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    transition: opacity .35s ease, visibility .35s;
+  }
+  .faceid.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+  .faceid .ring {
+    width: 88px; height: 88px; border-radius: 50%;
+    border: 2px solid rgba(247,246,243,0.35);
+    display: grid; place-items: center; margin-bottom: 28px;
+  }
+  .faceid .ring svg { width: 42px; height: 42px; opacity: 0.9; }
+  .faceid .ft { font-size: 17px; font-weight: 500; letter-spacing: -0.01em; margin-bottom: 8px; }
+  .faceid .fs { font-size: 13px; opacity: 0.55; margin-bottom: 36px; }
+  .faceid .unlock {
+    min-width: 160px; min-height: 48px; border: 1px solid rgba(247,246,243,0.25);
+    background: rgba(247,246,243,0.08); color: #f7f6f3; border-radius: 14px;
+    font-size: 15px; font-weight: 560; font-family: inherit; cursor: pointer;
+  }
+  .faceid .unlock:active { background: rgba(247,246,243,0.16); }
+
+  @keyframes softglow {
+    0%, 100% { box-shadow: 0 8px 28px rgba(28,28,26,0.08); border-color: var(--line); }
+    50% { box-shadow: 0 8px 36px rgba(28,28,26,0.16), 0 0 0 3px rgba(28,28,26,0.04); border-color: rgba(28,28,26,0.2); }
+  }
+</style>
+</head>
+<body>
+<div class="phone" id="app">
+  <div class="faceid" id="faceid">
+    <div class="ring" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/>
+        <circle cx="9" cy="10" r="1.2" fill="currentColor" stroke="none"/>
+        <circle cx="15" cy="10" r="1.2" fill="currentColor" stroke="none"/>
+        <path d="M9.5 15.2c.8.8 1.7 1.2 2.5 1.2s1.7-.4 2.5-1.2"/>
+      </svg>
+    </div>
+    <div class="ft">Face ID</div>
+    <div class="fs">Tap to unlock Aide</div>
+    <button class="unlock" id="faceUnlock" type="button">Unlock</button>
+  </div>
+
+  <header class="topbar">
+    <button class="icon-btn" id="menuBtn" aria-label="Open menu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </button>
+    <div class="brand">Aide</div>
+    <button class="icon-btn back" id="backBtn" aria-label="Back">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
+    </button>
+  </header>
+
+  <main class="stage" id="stage">
+    <div class="pins" id="pins"></div>
+    <div class="view active" id="viewRoot" data-id="home"></div>
+
+    <div class="scrim" id="scrim"></div>
+    <aside class="drawer" id="drawer" aria-hidden="true">
+      <div class="drawer-head">
+        <h2>Widgets</h2>
+        <button class="icon-btn" id="closeMenu" aria-label="Close">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+      </div>
+      <p class="drawer-note">Pin what you want on home. Or just ask — “add weather”, “add unfinished widget”.</p>
+      <div class="drawer-scroll">
+        <div class="section-label" id="activeLabel" style="display:none">On home</div>
+        <div class="active-list" id="activeList"></div>
+        <div class="section-label">Gallery</div>
+        <div class="widget-grid" id="gallery"></div>
+        <div class="section-label">Demo</div>
+        <div class="demo-list" id="demoList"></div>
+      </div>
+    </aside>
+  </main>
+
+  <div class="composer-wrap">
+    <div class="status-line" id="statusLine"></div>
+    <form class="composer" id="composer" autocomplete="off">
+      <input id="input" type="text" enterkeyhint="send" placeholder="Ask anything" aria-label="Message" />
+      <button class="send" id="send" type="submit" aria-label="Send" disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h12M13 6l6 6-6 6"/></svg>
+      </button>
+    </form>
+  </div>
+</div>
+
+<script>
+const WIDGETS = [
+  { id:'weather',   icon:'☀️', name:'Weather',   sub:'Local conditions',
+    pin:()=>({title:'Weather', body:'68°', sub:'Sunny · NH'}) },
+  { id:'reminders', icon:'✓',  name:'Reminders', sub:'Next to-dos',
+    pin:()=>({title:'Reminders', body: state.remindersHeld ? 'Held today' : 'Dog food', sub: state.remindersHeld ? 'Rough day mode' : 'On the way home'}) },
+  { id:'calendar',  icon:'📅', name:'Calendar',  sub:'Next event',
+    pin:()=>({title:'Up next', body:'Team sync', sub:'Today · 3:00 PM'}) },
+  { id:'timer',     icon:'⏱',  name:'Timer',     sub:'Quick countdown',
+    pin:()=>({title:'Timer', body:'25:00', sub:'Focus'}) },
+  { id:'notes',     icon:'📝', name:'Notes',     sub:'Scratch pad',
+    pin:()=>({title:'Notes', body:'Fiber specs…', sub:'3 notes'}) },
+  { id:'commute',   icon:'🚗', name:'Commute',   sub:'Home ↔ work',
+    pin:()=>({title:'Commute', body:'22 min', sub:'Via I-93 · light'}) },
+  { id:'photolist', icon:'📷', name:'Photo list',sub:'Visual checklist',
+    pin:()=>({title:'Photo list', body:'4 items', sub:'Groceries'}) },
+  { id:'news',      icon:'📰', name:'News',      sub:'Top headlines',
+    pin:()=>({title:'News', body:'3 stories', sub:'For you'}) },
+  { id:'unfinished',icon:'◐',  name:'Unfinished',sub:'Resume open tasks',
+    pin:()=>({title:'Unfinished', body: String(state.tasks.filter(t=>!t.done).length), sub:'Open tasks'}) },
+  { id:'leftoff',   icon:'↩',  name:'Where we left off', sub:'Resume last thread',
+    pin:()=>{
+      const t = state.tasks.find(x=>!x.done && x.crashable) || state.tasks.find(x=>!x.done);
+      return t
+        ? {title:'Left off', body: t.title, sub: t.sub}
+        : {title:'Left off', body:'Nothing open', sub:'You’re caught up'};
+    }},
+  { id:'priorities',icon:'≡',  name:'Tasks / priorities', sub:'What matters now',
+    pin:()=>({title:'Priorities', body: String(state.priorities.length), sub:'Today'}) },
+];
+
+const DEMOS = [
+  { id:1,  label:'Dinner Mode widgets', trigger:'demo dinner' },
+  { id:2,  label:'Skipped reminder ×3', trigger:'demo skip' },
+  { id:3,  label:'School flyer photo', trigger:'demo flyer' },
+  { id:4,  label:'Drive mode', trigger:'demo drive' },
+  { id:5,  label:'Rough day', trigger:'demo rough' },
+  { id:6,  label:'Leo got into something', trigger:'demo leo' },
+  { id:7,  label:'Bot news at 9 PM', trigger:'demo night' },
+  { id:8,  label:'Best TV under $500', trigger:'demo tv' },
+  { id:9,  label:'Crash mid-task', trigger:'demo crash' },
+  { id:10, label:'Face ID lock', trigger:'demo faceid' },
+];
+
+const state = {
+  pins: [],
+  thinkingMode: 'pulse',
+  locationOk: false,
+  homeSet: false,
+  busy: false,
+  learned: {},
+  pendingBooking: null,
+  showUnfinishedWidget: true,
+  neverShowUnfinished: false,
+  remindLess: false,
+  remindersHeld: false,
+  roughDay: false,
+  faceIdOn: true,
+  flyerNote: '',
+  history: [],
+  currentView: 'home',
+  tasks: [
+    { id:'seed-modem', kind:'modem', step:'ask', title:'Internet down', sub:'Modem lights — waiting', icon:'📡', done:false },
+    { id:'seed-cancel', kind:'cancel', step:'confirm', title:'Cancel order', sub:'Trail Runner · not answered', icon:'👟', done:false },
+    { id:'seed-vet', kind:'vet-remind', step:'skipped', title:'Book Leo’s checkup', sub:'Skipped 3 times', icon:'🐕', done:false, skips:3 },
+  ],
+  priorities: [
+    { id:'p1', title:'Pack lunches', sub:'Kids · morning', icon:'🥪' },
+    { id:'p2', title:'Fiber ticket #4821', sub:'Work · open', icon:'📡' },
+    { id:'p3', title:'Leo checkup', sub:'This week', icon:'🐕' },
+  ],
+  relatedNudgeUsed: {},
+};
+
+const el = {
+  stage: document.getElementById('stage'),
+  viewRoot: document.getElementById('viewRoot'),
+  pins: document.getElementById('pins'),
+  input: document.getElementById('input'),
+  send: document.getElementById('send'),
+  composer: document.getElementById('composer'),
+  form: document.getElementById('composer'),
+  menuBtn: document.getElementById('menuBtn'),
+  backBtn: document.getElementById('backBtn'),
+  drawer: document.getElementById('drawer'),
+  scrim: document.getElementById('scrim'),
+  closeMenu: document.getElementById('closeMenu'),
+  gallery: document.getElementById('gallery'),
+  activeList: document.getElementById('activeList'),
+  activeLabel: document.getElementById('activeLabel'),
+  statusLine: document.getElementById('statusLine'),
+  demoList: document.getElementById('demoList'),
+  faceid: document.getElementById('faceid'),
+  faceUnlock: document.getElementById('faceUnlock'),
+};
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function wait(ms){ return new Promise(r => setTimeout(r, ms)); }
+
+function setBackVisible(on) {
+  el.backBtn.classList.toggle('show', !!on);
+}
+
+function renderHome() {
+  return `
+    <div class="swipe-hint" style="opacity:0"></div>
+    <div class="home-hints">
+      <div class="hint">Try <em>“best TV under $500”</em></div>
+      <div class="hint">or <em>“where was I”</em></div>
+      <div class="hint">or open the menu → Demo</div>
+      <div class="hint">or <em>“My internet is down”</em></div>
+    </div>`;
+}
+
+function buildViewHTML(id, data={}) {
+  if (id === 'home') return renderHome();
+
+  if (id === 'modem-ask') {
+    return `
+      <div class="swipe-hint"></div>
+      <div class="hero-art">
+        <svg class="modem-svg" viewBox="0 0 200 140" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect x="30" y="50" width="140" height="55" rx="10" fill="#e8e6df" stroke="#c9c6bc" stroke-width="2"/>
+          <rect x="42" y="64" width="18" height="10" rx="3" fill="#d4d1c8"/>
+          <circle cx="78" cy="69" r="5" fill="#c45c4a"/>
+          <circle cx="96" cy="69" r="5" fill="#d4d1c8"/>
+          <circle cx="114" cy="69" r="5" fill="#d4d1c8"/>
+          <rect x="130" y="64" width="28" height="10" rx="3" fill="#b8b5ab"/>
+          <path d="M100 50 V28" stroke="#c9c6bc" stroke-width="3" stroke-linecap="round"/>
+          <path d="M100 28 L118 14" stroke="#c9c6bc" stroke-width="3" stroke-linecap="round"/>
+          <rect x="70" y="105" width="60" height="8" rx="2" fill="#d4d1c8"/>
+        </svg>
+      </div>
+      <p class="q">Any lights red or blinking?</p>
+      <p class="sub">Look at your modem first.</p>
+      <div class="choices">
+        <button class="choice" data-act="modem-red">Red</button>
+        <button class="choice" data-act="modem-blink">Blinking</button>
+        <button class="choice" data-act="modem-green">All green</button>
+      </div>`;
+  }
+  if (id === 'modem-red') {
+    return `
+      <div class="swipe-hint"></div>
+      <div class="hero-art"><span class="emoji">🔌</span></div>
+      <p class="q">Power or signal issue</p>
+      <p class="sub">Unplug the modem for 30 seconds, plug it back in, then tell me what the lights do.</p>
+      <div class="choices">
+        <button class="choice primary" data-act="modem-done">Lights look better</button>
+        <button class="choice" data-act="modem-ask">Still red</button>
+      </div>`;
+  }
+  if (id === 'modem-blink') {
+    return `
+      <div class="swipe-hint"></div>
+      <div class="hero-art"><span class="emoji">📶</span></div>
+      <p class="q">It’s trying to connect</p>
+      <p class="sub">Wait about 2 minutes. If it keeps blinking, we’ll check the cable next.</p>
+      <div class="choices">
+        <button class="choice primary" data-act="modem-done">It’s solid now</button>
+        <button class="choice" data-act="modem-red">Still blinking</button>
+      </div>`;
+  }
+  if (id === 'modem-green') {
+    return `
+      <div class="swipe-hint"></div>
+      <div class="hero-art"><span class="emoji">✅</span></div>
+      <p class="q">Modem looks fine</p>
+      <p class="sub">So it’s likely the Wi-Fi or your device.</p>
+      <div class="choices">
+        <button class="choice" data-act="modem-done">I’m on Wi-Fi</button>
+        <button class="choice" data-act="modem-done">I’m on ethernet</button>
+      </div>`;
+  }
+
+  if (id === 'cancel') {
+    return `
+      <div class="swipe-hint"></div>
+      <div class="order-card">
+        <div class="order-photo">👟</div>
+        <div class="order-meta">
+          <div class="t">Trail Runner · Size 11</div>
+          <div class="s">Order #48219 · Arrives Thu</div>
+        </div>
+      </div>
+      <p class="q">Cancel it?</p>
+      <div class="choices">
+        <button class="choice primary" data-act="cancel-yes">Yes, cancel</button>
+        <button class="choice" data-act="cancel-no">No, keep it</button>
+      </div>`;
+  }
+
+  if (id === 'done') {
+    return `
+      <div class="swipe-hint"></div>
+      <div class="done-hero">
+        <div class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg></div>
+        <div class="t">${escapeHtml(data.title || 'Got it')}</div>
+        ${data.sub ? `<div class="s">${escapeHtml(data.sub)}</div>` : ''}
+        ${data.learn ? `<div class="learn-pill"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>${escapeHtml(data.learn)}</div>` : ''}
+      </div>`;
+  }
+
+  if (id === 'tiny-done') {
+    return `
+      <div class="swipe-hint"></div>
+      <div class="tiny-done"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>${escapeHtml(data.title || 'Done')}</div>`;
+  }
+
+  if (id === 'weather') {
+    return `
+      <div class="swipe-hint"></div>
+      <div class="weather-card">
+        <div style="font-size:64px;margin-bottom:8px">☀️</div>
+        <div class="deg">68°</div>
+        <div class="cond">Sunny</div>
+        <div class="loc">Concord, NH · Light breeze</div>
+      </div>`;
+  }
+
+  if (id === 'location') {
+    return `
+      <div class="swipe-hint"></div>
+      <div class="hero-art"><span class="emoji">📍</span></div>
+      <p class="q">One missing piece</p>
+      <p class="sub">“On the way home” needs your location and a home address.</p>
+      <div class="choices">
+        <button class="choice primary" data-act="loc-allow">Allow location</button>
+        <button class="choice" data-act="loc-home">Set home address</button>
+      </div>`;
+  }
+
+  if (id === 'haircut-am') {
+    const h = data.hour || 3;
+    return `
+      <div class="swipe-hint"></div>
+      <div class="hero-art"><span class="emoji">✂</span></div>
+      <p class="q">Haircut at ${h}:00 AM</p>
+      <p class="sub">Booked — does that look right?</p>
+      <div class="choices">
+        <button class="choice primary" data-act="hair-ok">Looks good</button>
+        <button class="choice" data-act="hair-pm">No, PM</button>
+      </div>`;
+  }
+
+  if (id === 'haircut-conflict') {
+    const h = data.hour || 7;
+    const learned = state.learned.haircut === 'pm' ? 'afternoons' : 'mornings';
+    return `
+      <div class="swipe-hint"></div>
+      <div class="hero-art"><span class="emoji">✂</span></div>
+      <p class="q">Sort this out</p>
+      <p class="sub">You said ${h} — and I learned haircuts are ${learned}.</p>
+      <div class="choices">
+        <button class="choice" data-act="hair-pick-am">${h} AM</button>
+        <button class="choice" data-act="hair-pick-pm">${h} PM</button>
+      </div>`;
+  }
+
+  if (id === 'unfinished') {
+    const open = state.tasks.filter(t => !t.done);
+    const items = open.length ? open.map(t => `
+      <button class="uf-item" data-act="resume" data-task="${t.id}">
+        <div class="uf-icon">${t.icon}</div>
+        <div class="uf-body"><div class="t">${escapeHtml(t.title)}</div><div class="s">${escapeHtml(t.sub)}</div></div>
+      </button>`).join('') : `<p class="sub">Nothing waiting. Nice.</p>`;
+    return `
+      <div class="swipe-hint"></div>
+      <p class="q" style="margin-bottom:18px">Unfinished</p>
+      <div class="unfinished-list">${items}</div>`;
+  }
+
+  if (id === 'leftoff') {
+    const t = state.tasks.find(x=>!x.done && x.crashable) || state.tasks.find(x=>!x.done);
+    if (!t) {
+      return `
+        <div class="swipe-hint"></div>
+        <div class="hero-art"><span class="emoji">✨</span></div>
+        <p class="q">You’re caught up</p>
+        <p class="sub">Nothing waiting in the background.</p>`;
+    }
+    return `
+      <div class="swipe-hint"></div>
+      <div class="hero-art"><span class="emoji">${t.icon}</span></div>
+      <p class="q">Where we left off</p>
+      <p class="sub">${escapeHtml(t.title)} — ${escapeHtml(t.sub)}</p>
+      <div class="choices">
+        <button class="choice primary" data-act="resume" data-task="${t.id}">Pick up here</button>
+        <button class="choice" data-act="go-home">Stay on blank</button>
+      </div>`;
+  }
+
+  if (id === 'priorities') {
+    const items = state.priorities.map(p => `
+      <div class="pr-item">
+        <div class="pr-icon">${p.icon}</div>
+        <div class="pr-body"><div class="t">${escapeHtml(p.title)}</div><div class="s">${escapeHtml(p.sub)}</div></div>
+      </div>`).join('');
+    return `
+      <div class="swipe-hint"></div>
+      <p class="q" style="margin-bottom:18px">Priorities</p>
+      <div class="priority-list">${items}</div>`;
+  }
+
+  if (id === 'nudge') {
+    const t = data.task;
+    return `
+      <div class="swipe-hint"></div>
+      <div class="hero-art"><span class="emoji">${t.icon}</span></div>
+      <p class="q">Still open</p>
+      <p class="sub">${escapeHtml(t.title)} — ${escapeHtml(t.sub)}</p>
+      <div class="choices">
+        <button class="choice primary" data-act="resume" data-task="${t.id}">Pick up where I left off</button>
+        <button class="choice" data-act="dismiss-task" data-task="${t.id}">Dismiss</button>
+      </div>`;
+  }
+
+  /* ===== Scenario views ===== */
+  if (id === 'dinner') {
+    return `
+      <div class="swipe-hint"></div>
+      <div class="hero-art"><span class="emoji">🍽</span></div>
+      <p class="q">Dinner Mode</p>
+      <p class="sub">Home stays blank. Turn on “Where we left off” or “Tasks / priorities” when you want them.</p>
+      <div class="choices">
+        <button class="choice primary" data-act="pin-leftoff">Add Where we left off</button>
+        <button class="choice" data-act="pin-priorities">Add Tasks / priorities</button>
+        <button class="choice soft" data-act="go-home">Keep it blank</button>
+      </div>`;
+  }
+
+  if (id === 'skip3') {
+    return `
+      <div class="swipe-hint"></div>
+      <div class="hero-art"><span class="emoji">🐕</span></div>
+      <p class="q">Skipped 3 times</p>
+      <p class="sub">Book Leo’s checkup — what should I do with it?</p>
+      <div class="choices">
+        <button class="choice" data-act="skip-park">Park it</button>
+        <button class="choice" data-act="skip-keep">Keep reminding</button>
+        <button class="choice" data-act="skip-handoff">Hand off</button>
+        <button class="choice primary" data-act="skip-doit">Do it for me</button>
+      </div>`;
+  }
+
+  if (id === 'vet-draft') {
+    return `
+      <div class="swipe-hint"></div>
+      <div class="draft-card">
+        <div class="draft-meta">
+          <div class="t">Text to Concord Vet</div>
+          <div class="s">Draft · not sent</div>
+        </div>
+        <div class="draft-body">Hi — I’d like to book a checkup for Leo (black & white wavy coat). Afternoons this week work best. Thanks!</div>
+      </div>
+      <div class="choices">
+        <button class="choice primary" data-act="vet-approve">Approve</button>
+        <button class="choice" data-act="go-home">Not now</button>
+      </div>`;
+  }
+
+  if (id === 'flyer') {
+    const note = state.flyerNote;
+    return `
+      <div class="swipe-hint"></div>
+      <div class="cal-card">
+        <div class="cal-photo">📋</div>
+        <div class="cal-meta">
+          <div class="t">Spring Concert</div>
+          <div class="s">Thu · May 14 · 6:30 PM<br>Lincoln Elementary · Gym</div>
+        </div>
+      </div>
+      ${note ? `<div class="saved-note">Note saved: ${escapeHtml(note)}</div>` : `
+      <div class="comment-row">
+        <input id="flyerComment" type="text" placeholder="Add a note…" maxlength="80" />
+        <button class="send-mini" type="button" data-act="flyer-note" aria-label="Save note">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h12M13 6l6 6-6 6"/></svg>
+        </button>
+      </div>`}
+      <div class="choices">
+        <button class="choice primary" data-act="flyer-add">Add to calendar</button>
+        <button class="choice" data-act="flyer-remind">Remind: sign slip &amp; pay</button>
+      </div>`;
+  }
+
+  if (id === 'drive') {
+    return `
+      <div class="swipe-hint"></div>
+      <div class="quiet-state">
+        <div class="orb"><span></span></div>
+        <div class="t">Drive mode</div>
+        <div class="s">Bluetooth on · 3 errands waiting.<br>I’ll stay quiet unless you talk to me.</div>
+      </div>`;
+  }
+
+  if (id === 'rough') {
+    return `
+      <div class="swipe-hint"></div>
+      <div class="mood-banner">Noticed · softer today</div>
+      <div class="hero-art"><span class="emoji">🌤</span></div>
+      <p class="q">Taking it easy</p>
+      <p class="sub">Tone and colors softened. Reminders are held for today — tap when you’re ready.</p>
+      <div class="choices">
+        <button class="choice primary" data-act="rough-ok">Got it</button>
+        <button class="choice soft" data-act="rough-off">I’m fine — turn this off</button>
+      </div>`;
+  }
+
+  if (id === 'leo') {
+    return `
+      <div class="swipe-hint"></div>
+      <div class="info-card">
+        <div class="info-photo">🍇</div>
+        <div class="info-meta">
+          <div class="t">Looks like grapes</div>
+          <div class="s">Example data · toxic to dogs even in small amounts</div>
+        </div>
+        <ul class="symptom-list">
+          <li>Vomiting or diarrhea</li>
+          <li>Lethargy or weakness</li>
+          <li>Reduced appetite</li>
+          <li>Increased thirst or urination</li>
+        </ul>
+      </div>
+      <div class="choices">
+        <button class="choice primary" data-act="call-vet">Call the vet</button>
+        <button class="choice" data-act="go-home">Got it</button>
+      </div>`;
+  }
+
+  if (id === 'night') {
+    return `
+      <div class="swipe-hint"></div>
+      <p class="q" style="margin-bottom:16px">9:00 PM</p>
+      <div class="night-card">
+        <div class="rule">Only ping if it needs you tonight</div>
+        <div class="night-row">
+          <div class="dot hold"></div>
+          <div><div class="lbl">Nyx · portfolio notes</div><div class="why">Held for morning</div></div>
+        </div>
+        <div class="night-row">
+          <div class="dot hold"></div>
+          <div><div class="lbl">Gunny · card research</div><div class="why">Held for morning</div></div>
+        </div>
+        <div class="night-row">
+          <div class="dot ping"></div>
+          <div><div class="lbl">School · slip due tomorrow</div><div class="why">Needs you tonight · would ping</div></div>
+        </div>
+      </div>
+      <div class="choices" style="margin-top:18px">
+        <button class="choice soft" data-act="go-home">Got it</button>
+      </div>`;
+  }
+
+  if (id === 'tv') {
+    return `
+      <div class="swipe-hint"></div>
+      <p class="q" style="margin-bottom:6px">Top 3 under $500</p>
+      <div class="example-badge">EXAMPLE DATA · not live prices</div>
+      <div class="tv-row">
+        <button class="tv-card" data-act="tv-pick" data-name="Vizio 55&quot; V-Series">
+          <div class="tv-art a">📺</div>
+          <div class="tv-meta">
+            <div class="name">Vizio 55" V-Series</div>
+            <div class="price">$348</div>
+            <div class="tag">4K · example</div>
+          </div>
+        </button>
+        <button class="tv-card" data-act="tv-pick" data-name="TCL 55&quot; S-Class">
+          <div class="tv-art b">📺</div>
+          <div class="tv-meta">
+            <div class="name">TCL 55" S-Class</div>
+            <div class="price">$378</div>
+            <div class="tag">QLED · example</div>
+          </div>
+        </button>
+        <button class="tv-card" data-act="tv-pick" data-name="Hisense 55&quot; U6">
+          <div class="tv-art c">📺</div>
+          <div class="tv-meta">
+            <div class="name">Hisense 55" U6</div>
+            <div class="price">$429</div>
+            <div class="tag">ULED · example</div>
+          </div>
+        </button>
+      </div>
+      <p class="sub" style="margin:8px 0 0">Side by side to compare. Tap one.</p>`;
+  }
+
+  return `<p class="q">…</p>`;
+}
+
+let morphLock = false;
+async function showView(id, data={}, {push=true, autoHomeMs=0}={}) {
+  if (morphLock) await wait(60);
+  morphLock = true;
+  const prev = el.viewRoot;
+  const next = document.createElement('div');
+  next.className = 'view';
+  next.dataset.id = id;
+  next.innerHTML = buildViewHTML(id, data);
+  el.stage.appendChild(next);
+  void next.offsetWidth;
+  prev.classList.add('exit-up');
+  prev.classList.remove('active');
+  next.classList.add('active');
+  wireView(next, data);
+  await wait(320);
+  prev.remove();
+  el.viewRoot = next;
+  if (push && state.currentView !== id) {
+    if (state.currentView) state.history.push({ id: state.currentView, data: state._lastData });
+  }
+  state.currentView = id;
+  state._lastData = data;
+  setBackVisible(id !== 'home' && state.history.length > 0);
+  el.pins.style.visibility = id === 'home' ? 'visible' : 'hidden';
+  morphLock = false;
+  if (autoHomeMs > 0) {
+    await wait(autoHomeMs);
+    if (state.currentView === id) goHome();
+  }
+}
+
+function goHome() {
+  state.history = [];
+  showView('home', {}, {push:false});
+  setBackVisible(false);
+}
+
+function goBack() {
+  const prev = state.history.pop();
+  if (!prev) { goHome(); return; }
+  showView(prev.id, prev.data || {}, {push:false});
+}
+
+el.backBtn.addEventListener('click', goBack);
+
+(function swipeBack() {
+  let y0 = null;
+  el.stage.addEventListener('touchstart', e => {
+    if (state.currentView === 'home') return;
+    y0 = e.touches[0].clientY;
+  }, {passive:true});
+  el.stage.addEventListener('touchend', e => {
+    if (y0 == null) return;
+    const dy = e.changedTouches[0].clientY - y0;
+    y0 = null;
+    if (dy > 70) goBack();
+  }, {passive:true});
+})();
+
+function wireView(node, data) {
+  node.querySelectorAll('[data-act]').forEach(btn => {
+    btn.addEventListener('click', () => onAct(btn.dataset.act, btn.dataset, data));
+  });
+}
+
+function upsertTask(task) {
+  const i = state.tasks.findIndex(t => t.id === task.id);
+  if (i >= 0) state.tasks[i] = {...state.tasks[i], ...task};
+  else state.tasks.push(task);
+  renderPins();
+}
+function completeTask(id) {
+  const t = state.tasks.find(x => x.id === id);
+  if (t) t.done = true;
+  renderPins();
+}
+function openTasks() { return state.tasks.filter(t => !t.done); }
+
+function resumeTask(id) {
+  const t = state.tasks.find(x => x.id === id);
+  if (!t || t.done) return;
+  if (t.kind === 'modem') showView('modem-ask');
+  else if (t.kind === 'cancel') showView('cancel');
+  else if (t.kind === 'location') showView('location');
+  else if (t.kind === 'haircut') showView('haircut-am', {hour: t.hour || 3});
+  else if (t.kind === 'vet-remind') showView('skip3');
+  else if (t.kind === 'crash-tv') showView('tv');
+  else if (t.kind === 'flyer') showView('flyer');
+}
+
+async function maybeNudgeRelated(kind) {
+  if (state.neverShowUnfinished || state.remindLess || state.remindersHeld) return false;
+  if (state.relatedNudgeUsed[kind]) return false;
+  const t = openTasks().find(x => x.kind === kind);
+  if (!t) return false;
+  state.relatedNudgeUsed[kind] = true;
+  await think('…', 400);
+  await showView('nudge', {task: t});
+  return true;
+}
+
+function setThinking(on, status) {
+  el.composer.classList.toggle('thinking', on && state.thinkingMode === 'pulse');
+  el.statusLine.textContent = (on && state.thinkingMode === 'status') ? (status || 'Thinking…') : '';
+}
+async function think(status, ms=650) {
+  if (state.thinkingMode === 'off') { await wait(Math.min(ms, 280)); return; }
+  setThinking(true, status);
+  await wait(ms);
+  setThinking(false);
+}
+
+function setRoughDay(on) {
+  state.roughDay = on;
+  state.remindersHeld = on;
+  document.body.classList.toggle('rough', on);
+  renderPins();
+}
+
+function showFaceId() {
+  el.faceid.classList.remove('hidden');
+}
+function hideFaceId() {
+  el.faceid.classList.add('hidden');
+}
+el.faceUnlock.addEventListener('click', hideFaceId);
+
+async function onAct(act, ds={}, data={}) {
+  if (state.busy) return;
+  state.busy = true;
+  try {
+    if (act === 'modem-red') {
+      upsertTask({id:'seed-modem', kind:'modem', step:'red', title:'Internet down', sub:'Power cycle in progress', icon:'📡', done:false});
+      await think('…', 400); await showView('modem-red');
+    } else if (act === 'modem-blink') {
+      upsertTask({id:'seed-modem', kind:'modem', step:'blink', title:'Internet down', sub:'Waiting on blink', icon:'📡', done:false});
+      await think('…', 400); await showView('modem-blink');
+    } else if (act === 'modem-green') {
+      upsertTask({id:'seed-modem', kind:'modem', step:'green', title:'Internet down', sub:'Checking device', icon:'📡', done:false});
+      await think('…', 400); await showView('modem-green');
+    } else if (act === 'modem-ask') {
+      await think('…', 300); await showView('modem-ask');
+    } else if (act === 'modem-done') {
+      completeTask('seed-modem');
+      await think('…', 350);
+      await showView('done', {title:'Got it', sub:'You’re back online'}, {autoHomeMs:1400});
+    } else if (act === 'cancel-yes') {
+      completeTask('seed-cancel');
+      await think('Canceling…', 500);
+      await showView('done', {title:'Canceled', sub:'Refund in 3–5 days'}, {autoHomeMs:1400});
+    } else if (act === 'cancel-no') {
+      completeTask('seed-cancel');
+      await think('…', 300);
+      await showView('done', {title:'Kept', sub:'Arrives Thursday'}, {autoHomeMs:1400});
+    } else if (act === 'loc-allow') {
+      state.locationOk = true;
+      await think('…', 350);
+      if (state.homeSet) {
+        completeTask('loc-remind');
+        await showView('done', {title:'Got it', sub:'I’ll remind you when you leave for home'}, {autoHomeMs:1500});
+      } else {
+        upsertTask({id:'loc-remind', kind:'location', title:'Dog food reminder', sub:'Needs home address', icon:'📍', done:false});
+        await showView('location');
+      }
+    } else if (act === 'loc-home') {
+      state.homeSet = true;
+      await think('…', 350);
+      if (state.locationOk) {
+        completeTask('loc-remind');
+        await showView('done', {title:'Got it', sub:'I’ll remind you when you leave for home'}, {autoHomeMs:1500});
+      } else {
+        upsertTask({id:'loc-remind', kind:'location', title:'Dog food reminder', sub:'Needs location', icon:'📍', done:false});
+        await showView('location');
+      }
+    } else if (act === 'hair-ok') {
+      state.pendingBooking = null;
+      completeTask('haircut');
+      const h = (data.hour || 3);
+      await think('…', 300);
+      await showView('done', {title:`Booked — ${h}:00 AM`}, {autoHomeMs:1300});
+    } else if (act === 'hair-pm') {
+      state.learned.haircut = 'pm';
+      state.pendingBooking = null;
+      completeTask('haircut');
+      const h = (data.hour || 3);
+      await think('Fixing…', 400);
+      await showView('done', {title:`Got it — ${h}:00 PM`, learn:'Learned: haircuts are afternoons'}, {autoHomeMs:1800});
+    } else if (act === 'hair-pick-am' || act === 'hair-pick-pm') {
+      const mer = act.endsWith('am') ? 'am' : 'pm';
+      state.learned.haircut = mer;
+      completeTask('haircut');
+      const h = data.hour || 7;
+      await think('Booking…', 400);
+      await showView('done', {title:`Booked — ${h}:00 ${mer.toUpperCase()}`}, {autoHomeMs:1400});
+    } else if (act === 'resume') {
+      resumeTask(ds.task);
+    } else if (act === 'dismiss-task') {
+      completeTask(ds.task);
+      await showView('tiny-done', {title:'Done — dismissed'}, {autoHomeMs:900});
+    } else if (act === 'go-home') {
+      goHome();
+    } else if (act === 'pin-leftoff') {
+      if (!state.pins.includes('leftoff')) state.pins.push('leftoff');
+      renderPins(); renderGallery();
+      await showView('tiny-done', {title:'Done — Where we left off on home'}, {autoHomeMs:1100});
+    } else if (act === 'pin-priorities') {
+      if (!state.pins.includes('priorities')) state.pins.push('priorities');
+      renderPins(); renderGallery();
+      await showView('tiny-done', {title:'Done — Tasks / priorities on home'}, {autoHomeMs:1100});
+    } else if (act === 'skip-park') {
+      upsertTask({id:'seed-vet', kind:'vet-remind', title:'Book Leo’s checkup', sub:'Parked', icon:'🐕', done:false, skips:3});
+      await think('…', 300);
+      await showView('done', {title:'Parked', sub:'Won’t nudge — ask anytime'}, {autoHomeMs:1400});
+    } else if (act === 'skip-keep') {
+      await think('…', 300);
+      await showView('done', {title:'Keeping it', sub:'I’ll remind again later'}, {autoHomeMs:1400});
+    } else if (act === 'skip-handoff') {
+      completeTask('seed-vet');
+      await think('…', 350);
+      await showView('done', {title:'Handed off', sub:'Sent to your partner (mock)'}, {autoHomeMs:1400});
+    } else if (act === 'skip-doit') {
+      await think('Drafting…', 500);
+      await showView('vet-draft');
+    } else if (act === 'vet-approve') {
+      completeTask('seed-vet');
+      await think('Sending…', 450);
+      await showView('done', {title:'Sent (mock)', sub:'Draft approved — not a real text'}, {autoHomeMs:1600});
+    } else if (act === 'flyer-note') {
+      const input = el.viewRoot.querySelector('#flyerComment');
+      const note = (input && input.value.trim()) || '';
+      if (!note) { state.busy = false; return; }
+      state.flyerNote = note;
+      await think('Saving…', 300);
+      await showView('flyer');
+    } else if (act === 'flyer-add') {
+      upsertTask({id:'flyer-event', kind:'flyer', title:'Spring Concert', sub:'May 14 · on calendar', icon:'📋', done:false});
+      await think('…', 350);
+      await showView('done', {title:'Added', sub:'Spring Concert · May 14'}, {autoHomeMs:1400});
+    } else if (act === 'flyer-remind') {
+      upsertTask({id:'flyer-slip', kind:'flyer', title:'Sign slip & pay', sub:'Before May 14', icon:'✏️', done:false});
+      await think('…', 350);
+      await showView('done', {title:'Reminder set', sub:'Sign slip and pay'}, {autoHomeMs:1400});
+    } else if (act === 'rough-ok') {
+      goHome();
+    } else if (act === 'rough-off') {
+      setRoughDay(false);
+      await showView('tiny-done', {title:'Done — back to normal'}, {autoHomeMs:1000});
+    } else if (act === 'call-vet') {
+      await think('…', 400);
+      await showView('done', {title:'Calling Concord Vet', sub:'Mock dial — (603) 555-0142'}, {autoHomeMs:1600});
+    } else if (act === 'tv-pick') {
+      const name = ds.name || 'TV';
+      await think('…', 300);
+      await showView('done', {title: name, sub:'Example pick · not a purchase'}, {autoHomeMs:1500});
+    }
+  } finally {
+    state.busy = false;
+    el.send.disabled = !el.input.value.trim();
+  }
+}
+
+function openMenu() {
+  el.drawer.classList.add('open'); el.scrim.classList.add('open');
+  el.drawer.setAttribute('aria-hidden','false'); renderGallery(); renderDemos();
+}
+function closeMenu() {
+  el.drawer.classList.remove('open'); el.scrim.classList.remove('open');
+  el.drawer.setAttribute('aria-hidden','true');
+}
+el.menuBtn.addEventListener('click', openMenu);
+el.closeMenu.addEventListener('click', closeMenu);
+el.scrim.addEventListener('click', closeMenu);
+
+function togglePin(id) {
+  const i = state.pins.indexOf(id);
+  if (i >= 0) state.pins.splice(i,1); else state.pins.push(id);
+  renderPins(); renderGallery();
+}
+function removePin(id) {
+  state.pins = state.pins.filter(x => x !== id);
+  renderPins(); renderGallery();
+}
+function renderGallery() {
+  el.gallery.innerHTML = '';
+  WIDGETS.forEach(w => {
+    const on = state.pins.includes(w.id);
+    const b = document.createElement('button');
+    b.className = 'wcard' + (on ? ' on' : '');
+    b.type = 'button';
+    b.innerHTML = `<span class="badge">✓</span><span class="wi">${w.icon}</span><div class="wt">${w.name}</div><div class="ws">${w.sub}</div>`;
+    b.addEventListener('click', () => togglePin(w.id));
+    el.gallery.appendChild(b);
+  });
+  el.activeList.innerHTML = '';
+  el.activeLabel.style.display = state.pins.length ? '' : 'none';
+  state.pins.forEach(id => {
+    const w = WIDGETS.find(x => x.id === id);
+    const row = document.createElement('div');
+    row.className = 'active-row';
+    row.innerHTML = `<span class="n">${w.icon} ${w.name}</span><button class="x" aria-label="Remove">×</button>`;
+    row.querySelector('.x').addEventListener('click', () => removePin(id));
+    el.activeList.appendChild(row);
+  });
+}
+function renderDemos() {
+  el.demoList.innerHTML = '';
+  DEMOS.forEach(d => {
+    const b = document.createElement('button');
+    b.className = 'demo-btn';
+    b.type = 'button';
+    b.innerHTML = `<span class="dn">${d.id}</span><span class="dt">${d.label}</span>`;
+    b.addEventListener('click', async () => {
+      closeMenu();
+      await wait(180);
+      await handle(d.trigger);
+    });
+    el.demoList.appendChild(b);
+  });
+}
+function renderPins() {
+  el.pins.innerHTML = '';
+  state.pins.forEach(id => {
+    const w = WIDGETS.find(x => x.id === id);
+    const p = w.pin();
+    const card = document.createElement('div');
+    card.className = 'pin-card';
+    card.innerHTML = `<div class="pc-icon">${w.icon}</div><div class="pc-title">${p.title}</div><div class="pc-body">${p.body}</div><div class="pc-sub">${p.sub}</div>`;
+    card.addEventListener('click', () => {
+      if (id === 'unfinished') showView('unfinished');
+      else if (id === 'weather') showView('weather');
+      else if (id === 'leftoff') showView('leftoff');
+      else if (id === 'priorities') showView('priorities');
+    });
+    let tmr=null;
+    card.addEventListener('touchstart', ()=>{ tmr=setTimeout(()=>removePin(id),650); }, {passive:true});
+    card.addEventListener('touchend', ()=>clearTimeout(tmr));
+    card.addEventListener('touchmove', ()=>clearTimeout(tmr));
+    el.pins.appendChild(card);
+  });
+}
+
+function matchWidget(name) {
+  const n = name.toLowerCase().replace(/[^a-z\s\/]/g,'').trim();
+  const map = {
+    weather:'weather', reminders:'reminders', reminder:'reminders',
+    calendar:'calendar', timer:'timer', notes:'notes', note:'notes',
+    commute:'commute', 'photo list':'photolist', photolist:'photolist', photos:'photolist',
+    news:'news', unfinished:'unfinished', 'unfinished widget':'unfinished', tasks:'unfinished', 'open tasks':'unfinished',
+    'where we left off':'leftoff', leftoff:'leftoff', 'left off':'leftoff',
+    priorities:'priorities', priority:'priorities', 'tasks priorities':'priorities', 'task list':'priorities', 'priority list':'priorities'
+  };
+  if (map[n]) return map[n];
+  for (const w of WIDGETS) {
+    if (n.includes(w.id) || w.name.toLowerCase().includes(n) || n.includes(w.name.toLowerCase())) return w.id;
+  }
+  if (/unfinished/.test(n)) return 'unfinished';
+  if (/left\s*off|where we/.test(n)) return 'leftoff';
+  if (/priorit/.test(n)) return 'priorities';
+  return null;
+}
+
+el.input.addEventListener('input', () => {
+  el.send.disabled = !el.input.value.trim() || state.busy;
+});
+el.form.addEventListener('submit', async e => {
+  e.preventDefault();
+  const text = el.input.value.trim();
+  if (!text || state.busy) return;
+  el.input.value = '';
+  el.send.disabled = true;
+  await handle(text);
+});
+
+async function runDemo(n) {
+  if (n === 1) {
+    await think('…', 400);
+    await showView('dinner');
+  } else if (n === 2) {
+    upsertTask({id:'seed-vet', kind:'vet-remind', title:'Book Leo’s checkup', sub:'Skipped 3 times', icon:'🐕', done:false, skips:3});
+    await think('…', 450);
+    await showView('skip3');
+  } else if (n === 3) {
+    state.flyerNote = '';
+    await think('Looking at the photo…', 700);
+    await showView('flyer');
+  } else if (n === 4) {
+    await think('…', 350);
+    await showView('drive');
+  } else if (n === 5) {
+    setRoughDay(true);
+    await think('…', 500);
+    await showView('rough');
+  } else if (n === 6) {
+    await think('Looking at the photo…', 700);
+    await showView('leo');
+  } else if (n === 7) {
+    await think('…', 400);
+    await showView('night');
+  } else if (n === 8) {
+    await think('Comparing…', 650);
+    await showView('tv');
+  } else if (n === 9) {
+    upsertTask({id:'crash-tv', kind:'crash-tv', title:'Best TV under $500', sub:'Crashed mid-compare', icon:'📺', done:false, crashable:true});
+    if (!state.pins.includes('leftoff')) state.pins.push('leftoff');
+    renderPins(); renderGallery();
+    await think('Reopening…', 500);
+    goHome();
+    await wait(400);
+    await showView('tiny-done', {title:'Back · blank as usual. Check Where we left off or ask “where was I”'}, {autoHomeMs:2200});
+  } else if (n === 10) {
+    state.faceIdOn = true;
+    showFaceId();
+  }
+}
+
+async function handle(raw) {
+  state.busy = true;
+  el.send.disabled = true;
+  const t = raw.toLowerCase().trim();
+  try {
+    // Demo triggers
+    const demoM = t.match(/^demo\s+(dinner|skip|flyer|drive|rough|leo|night|tv|crash|faceid|\d+)$/);
+    if (demoM) {
+      const map = {dinner:1,skip:2,flyer:3,drive:4,rough:5,leo:6,night:7,tv:8,crash:9,faceid:10};
+      const n = map[demoM[1]] || parseInt(demoM[1],10);
+      await runDemo(n); return;
+    }
+
+    // Face ID settings
+    if (/turn off face\s*id|disable face\s*id|face\s*id off/.test(t)) {
+      state.faceIdOn = false; hideFaceId();
+      await think('Updating…', 350);
+      await showView('tiny-done', {title:'Done — Face ID off for this demo'}, {autoHomeMs:1100}); return;
+    }
+    if (/turn on face\s*id|enable face\s*id|face\s*id on|lock with face/.test(t)) {
+      state.faceIdOn = true;
+      await think('Updating…', 350);
+      await showView('tiny-done', {title:'Done — Face ID on. It’ll ask next open'}, {autoHomeMs:1200}); return;
+    }
+
+    // Where was I / crash recovery
+    if (/where was i|where we left off|what was i doing|resume/.test(t)) {
+      await think('…', 400); await showView('leftoff'); return;
+    }
+
+    // Rough day off via chat
+    if (/i.?m fine|turn off rough|normal mode|end rough day/.test(t) && state.roughDay) {
+      setRoughDay(false);
+      await think('Updating…', 350);
+      await showView('tiny-done', {title:'Done — back to normal'}, {autoHomeMs:1000}); return;
+    }
+
+    // TV shopping
+    if (/best tv|tv under|television under|tvs? under ?\$?500/.test(t)) {
+      await think('Comparing…', 650); await showView('tv'); return;
+    }
+
+    // Drive
+    if (/drive mode|i.?m driving|on bluetooth|heading out/.test(t)) {
+      await think('…', 350); await showView('drive'); return;
+    }
+
+    // Flyer / photo intents
+    if (/school flyer|flyer photo|spring concert|sign (the )?slip/.test(t)) {
+      state.flyerNote = '';
+      await think('Looking at the photo…', 700); await showView('flyer'); return;
+    }
+
+    // Leo / dog poison
+    if (/leo (got|ate|into)|dog (ate|got into)|grapes|what.*(leo|dog).*into/.test(t)) {
+      await think('Looking at the photo…', 700); await showView('leo'); return;
+    }
+
+    // Night / bot news
+    if (/9\s*pm|bot news|other bots|ping me tonight|held for morning/.test(t)) {
+      await think('…', 400); await showView('night'); return;
+    }
+
+    // Skipped reminder
+    if (/skipped|book leo|vet checkup|checkup for leo/.test(t)) {
+      upsertTask({id:'seed-vet', kind:'vet-remind', title:'Book Leo’s checkup', sub:'Skipped 3 times', icon:'🐕', done:false, skips:3});
+      await think('…', 450); await showView('skip3'); return;
+    }
+
+    // Dinner mode
+    if (/dinner mode|coming back|kid interrupt/.test(t)) {
+      await think('…', 400); await showView('dinner'); return;
+    }
+
+    // Rough day
+    if (/rough day|hard day|soft(er)? (tone|colors)|hold reminders/.test(t)) {
+      setRoughDay(true);
+      await think('…', 500); await showView('rough'); return;
+    }
+
+    // Settings via chat
+    if (/show what you.?re doing|show status|status line/.test(t)) {
+      await think('Updating…', 350); state.thinkingMode = 'status';
+      await showView('tiny-done', {title:"Done — I'll show a short status line"}, {autoHomeMs:1000}); return;
+    }
+    if (/just show the answer|hide status|indicator off|quiet indicator/.test(t)) {
+      await think('Updating…', 350); state.thinkingMode = 'off';
+      await showView('tiny-done', {title:'Done — indicator off'}, {autoHomeMs:900}); return;
+    }
+    if (/soft pulse|subtle pulse|default (thinking|indicator)/.test(t)) {
+      await think('Updating…', 350); state.thinkingMode = 'pulse';
+      await showView('tiny-done', {title:'Done — soft pulse on the bubble'}, {autoHomeMs:900}); return;
+    }
+    if (/remind me less/.test(t)) {
+      await think('Updating…', 350); state.remindLess = true;
+      await showView('tiny-done', {title:'Done — I’ll nudge less'}, {autoHomeMs:1000}); return;
+    }
+    if (/never show unfinished|hide unfinished|no unfinished/.test(t)) {
+      await think('Updating…', 350); state.neverShowUnfinished = true;
+      await showView('tiny-done', {title:'Done — unfinished stays quiet'}, {autoHomeMs:1000}); return;
+    }
+    if (/show unfinished|list unfinished|open unfinished/.test(t)) {
+      await think('…', 300); await showView('unfinished'); return;
+    }
+
+    // Widgets
+    const addM = t.match(/^(?:add|pin|show)\s+(?:the\s+)?(.+?)(?:\s+widget)?$/);
+    const remM = t.match(/^(?:remove|hide|unpin)\s+(?:the\s+)?(.+?)(?:\s+widget)?$/);
+    if (addM) {
+      const id = matchWidget(addM[1]);
+      await think('Adding…', 400);
+      if (!id) { await showView('tiny-done', {title:'Which widget?'}, {autoHomeMs:1100}); return; }
+      if (!state.pins.includes(id)) state.pins.push(id);
+      renderPins(); renderGallery();
+      if (id === 'weather') { await showView('weather'); return; }
+      if (id === 'unfinished') { await showView('unfinished'); return; }
+      if (id === 'leftoff') { await showView('leftoff'); return; }
+      if (id === 'priorities') { await showView('priorities'); return; }
+      await showView('tiny-done', {title:`Done — added ${WIDGETS.find(w=>w.id===id).name}`}, {autoHomeMs:1000}); return;
+    }
+    if (remM) {
+      const id = matchWidget(remM[1]);
+      await think('Updating…', 350);
+      if (id) removePin(id);
+      await showView('tiny-done', {title: id ? `Done — removed ${WIDGETS.find(w=>w.id===id).name}` : 'Which widget?'}, {autoHomeMs:1000}); return;
+    }
+    if (/^(weather|show weather|what.?s the weather)/.test(t)) {
+      await think('Checking…', 500); await showView('weather'); return;
+    }
+
+    // Modem
+    if (/internet.*(down|out)|wifi.*(down|out)|no internet|connection.*(down|issue)/.test(t)) {
+      upsertTask({id:'seed-modem', kind:'modem', step:'ask', title:'Internet down', sub:'Modem lights — waiting', icon:'📡', done:false});
+      await think('Checking…', 550); await showView('modem-ask'); return;
+    }
+
+    if (/cancel.*(order|it)|i want to cancel/.test(t)) {
+      const openCancel = openTasks().find(x => x.kind === 'cancel');
+      if (openCancel && !state.neverShowUnfinished) {
+        await think('Finding your order…', 500); await showView('cancel'); return;
+      }
+      upsertTask({id:'seed-cancel', kind:'cancel', step:'confirm', title:'Cancel order', sub:'Trail Runner · not answered', icon:'👟', done:false});
+      await think('Finding your order…', 650); await showView('cancel'); return;
+    }
+
+    if (/dog food|remind me|on the way home/.test(t) && !/remind me less/.test(t)) {
+      if (state.remindersHeld) {
+        await think('…', 350);
+        await showView('tiny-done', {title:'Reminders held today — ask again tomorrow'}, {autoHomeMs:1400}); return;
+      }
+      if (await maybeNudgeRelated('location')) return;
+      upsertTask({id:'loc-remind', kind:'location', title:'Dog food reminder', sub:'Needs location & home', icon:'📍', done:false});
+      if (!state.locationOk || !state.homeSet) {
+        await think('Setting that up…', 500); await showView('location'); return;
+      }
+      completeTask('loc-remind');
+      await think('…', 400);
+      await showView('done', {title:'Got it', sub:'I’ll remind you when you leave for home'}, {autoHomeMs:1500}); return;
+    }
+
+    if (state.pendingBooking && state.pendingBooking.kind === 'haircut' && /^(no,?\s*)?(pm|p\.m\.|afternoon)/.test(t)) {
+      state.learned.haircut = 'pm';
+      const h = state.pendingBooking.hour; state.pendingBooking = null; completeTask('haircut');
+      await think('Fixing…', 400);
+      await showView('done', {title:`Got it — ${h}:00 PM`, learn:'Learned: haircuts are afternoons'}, {autoHomeMs:1800}); return;
+    }
+
+    const haircutM = t.match(/(?:book\s+(?:a\s+)?|schedule\s+(?:a\s+)?)?haircut(?:\s+at\s+(\d{1,2})(?::(\d{2}))?\s*(am|pm|a\.m\.|p\.m\.)?)?/);
+    if (haircutM && /haircut/.test(t)) {
+      let hour = haircutM[1] ? parseInt(haircutM[1], 10) : 3;
+      const explicit = haircutM[3] ? haircutM[3].replace(/\./g,'').toLowerCase() : null;
+      if (hour > 12) { hour = ((hour + 11) % 12) + 1; }
+
+      if (!explicit && state.learned.haircut) {
+        upsertTask({id:'haircut', kind:'haircut', hour, title:'Haircut', sub:`${hour} — needs AM/PM`, icon:'✂', done:false});
+        await think('Checking…', 450); await showView('haircut-conflict', {hour}); return;
+      }
+      if (explicit) {
+        completeTask('haircut');
+        await think('Booking…', 450);
+        await showView('done', {title:`Booked — ${hour}:00 ${explicit.toUpperCase()}`}, {autoHomeMs:1400}); return;
+      }
+      state.pendingBooking = { kind:'haircut', hour, meridiem:'am' };
+      upsertTask({id:'haircut', kind:'haircut', hour, title:'Haircut', sub:`${hour}:00 AM — confirm`, icon:'✂', done:false});
+      await think('Booking…', 550); await showView('haircut-am', {hour}); return;
+    }
+
+    if (!state.neverShowUnfinished && !state.remindLess) {
+      const open = openTasks();
+      if (open.length && /help|what.?s left|continue|status/.test(t)) {
+        await think('…', 350); await showView('unfinished'); return;
+      }
+    }
+
+    await think('…', 450);
+    await showView('tiny-done', {title:'What’s the one thing you want help with?'}, {autoHomeMs:1400});
+  } finally {
+    state.busy = false;
+    el.send.disabled = !el.input.value.trim();
+  }
+}
+
+/* boot — Face ID then blank home */
+el.viewRoot.innerHTML = renderHome();
+el.viewRoot.classList.add('active');
+el.viewRoot.dataset.id = 'home';
+state.currentView = 'home';
+closeMenu();
+renderPins();
+renderGallery();
+renderDemos();
+if (state.faceIdOn) showFaceId();
+else hideFaceId();
+</script>
+</body>
+</html>

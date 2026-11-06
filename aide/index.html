@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#f7f6f3" />
+<title>Aide</title>
+<style>
+  :root {
+    --bg: #f7f6f3;
+    --surface: #ffffff;
+    --ink: #1c1c1a;
+    --ink-soft: #6b6a66;
+    --ink-faint: #a8a69f;
+    --line: rgba(28, 28, 26, 0.08);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0;
+    min-height: 100%;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  body {
+    display: flex;
+    justify-content: center;
+    padding: calc(28px + env(safe-area-inset-top, 0px)) 20px calc(32px + env(safe-area-inset-bottom, 0px));
+  }
+  main { width: 100%; max-width: 420px; }
+  .brand {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 560;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+  h1 {
+    margin: 10px 0 6px;
+    font-size: 32px;
+    font-weight: 560;
+    letter-spacing: -0.03em;
+  }
+  .lede {
+    margin: 0 0 28px;
+    font-size: 16px;
+    line-height: 1.45;
+    color: var(--ink-soft);
+  }
+  nav { display: flex; flex-direction: column; gap: 10px; }
+  a {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    text-decoration: none;
+    color: inherit;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 16px 16px;
+  }
+  a:active { background: #f3f2ee; }
+  .name {
+    font-size: 17px;
+    font-weight: 560;
+    letter-spacing: -0.02em;
+  }
+  .note {
+    font-size: 14px;
+    color: var(--ink-soft);
+    text-align: right;
+  }
+</style>
+</head>
+<body>
+<main>
+  <p class="brand">Aide</p>
+  <h1>Prototypes</h1>
+  <p class="lede">Phone-friendly versions of the assistant. Open one.</p>
+  <nav>
+    <a href="v4/">
+      <span class="name">v4</span>
+      <span class="note">latest, 20 scenarios</span>
+    </a>
+    <a href="v3/">
+      <span class="name">v3</span>
+      <span class="note">Face ID, 10 scenarios</span>
+    </a>
+    <a href="v2/">
+      <span class="name">v2</span>
+      <span class="note">fixed bubble, Unfinished</span>
+    </a>
+    <a href="v1/">
+      <span class="name">v1</span>
+      <span class="note">first version</span>
+    </a>
+  </nav>
+</main>
+</body>
+</html>

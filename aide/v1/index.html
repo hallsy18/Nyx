@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="theme-color" content="#f7f6f3" />
+<title>Aide — Assistant</title>
+<style>
+  :root {
+    --bg: #f7f6f3;
+    --surface: #ffffff;
+    --ink: #1c1c1a;
+    --ink-soft: #6b6a66;
+    --ink-faint: #a8a69f;
+    --line: rgba(28,28,26,0.08);
+    --accent: #2a2a28;
+    --chip: #efeee9;
+    --chip-active: #1c1c1a;
+    --chip-active-ink: #f7f6f3;
+    --green: #2f6b4f;
+    --shadow: 0 8px 28px rgba(28,28,26,0.08);
+    --radius: 18px;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    background: var(--bg); color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    overflow: hidden;
+  }
+  body { display: flex; justify-content: center; align-items: stretch; }
+  .phone {
+    width: 100%; max-width: 430px; height: 100%;
+    display: flex; flex-direction: column;
+    position: relative; background: var(--bg);
+  }
+
+  /* Top bar */
+  .topbar {
+    flex: 0 0 auto;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: calc(12px + var(--safe-top)) 16px 8px;
+    z-index: 20;
+  }
+  .menu-btn, .ghost-btn {
+    width: 44px; height: 44px; border: 0; background: transparent;
+    border-radius: 12px; display: grid; place-items: center; cursor: pointer;
+    color: var(--ink);
+  }
+  .menu-btn:active, .ghost-btn:active { background: var(--line); }
+  .menu-btn svg { width: 22px; height: 22px; }
+  .brand {
+    font-size: 15px; font-weight: 560; letter-spacing: -0.01em;
+    color: var(--ink-soft); opacity: 0.7;
+  }
+
+  /* Home / conversation area */
+  .stage {
+    flex: 1 1 auto;
+    position: relative;
+    overflow: hidden;
+    display: flex; flex-direction: column;
+  }
+  .widgets-row {
+    flex: 0 0 auto;
+    display: flex; gap: 10px; padding: 4px 16px 8px;
+    overflow-x: auto; scrollbar-width: none;
+    min-height: 0;
+  }
+  .widgets-row::-webkit-scrollbar { display: none; }
+  .widgets-row:empty { display: none; }
+  .pin-card {
+    flex: 0 0 auto;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 12px 14px;
+    min-width: 132px; max-width: 170px;
+    box-shadow: 0 2px 10px rgba(28,28,26,0.04);
+    user-select: none;
+    transition: transform .18s ease, box-shadow .18s ease, opacity .18s;
+    cursor: grab;
+  }
+  .pin-card.dragging { opacity: 0.7; transform: scale(1.03); box-shadow: var(--shadow); cursor: grabbing; }
+  .pin-card .pc-icon { font-size: 20px; line-height: 1; margin-bottom: 6px; }
+  .pin-card .pc-title { font-size: 12px; color: var(--ink-soft); font-weight: 500; }
+  .pin-card .pc-body { font-size: 15px; font-weight: 560; letter-spacing: -0.02em; margin-top: 2px; }
+  .pin-card .pc-sub { font-size: 12px; color: var(--ink-faint); margin-top: 2px; }
+
+  .feed {
+    flex: 1 1 auto;
+    overflow-y: auto; overflow-x: hidden;
+    padding: 8px 20px 12px;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+  .empty-state {
+    height: 100%;
+    display: flex; flex-direction: column; justify-content: flex-end;
+    padding-bottom: 8px;
+    pointer-events: none;
+  }
+  .hints {
+    display: flex; flex-direction: column; gap: 6px;
+    opacity: 0.45;
+  }
+  .hint {
+    font-size: 13px; color: var(--ink-soft);
+    letter-spacing: -0.01em; font-weight: 400;
+  }
+  .hint em { font-style: normal; color: var(--ink-faint); }
+
+  .msg {
+    max-width: 92%;
+    margin: 10px 0;
+    animation: rise .28s ease both;
+  }
+  .msg.user { margin-left: auto; text-align: right; }
+  .msg.bot { margin-right: auto; text-align: left; }
+  .msg.user .chips, .msg.bot .chips, .msg.user .vcard, .msg.bot .vcard { text-align: left; }
+  .bubble {
+    display: inline-block;
+    padding: 12px 16px;
+    border-radius: 20px;
+    font-size: 16px; line-height: 1.35;
+    letter-spacing: -0.01em;
+    white-space: pre-wrap;
+  }
+  .msg.user .bubble {
+    background: var(--accent); color: #faf9f6;
+    border-bottom-right-radius: 6px;
+  }
+  .msg.bot .bubble {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-bottom-left-radius: 6px;
+    box-shadow: 0 1px 2px rgba(28,28,26,0.03);
+  }
+  .chips {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    margin-top: 10px;
+  }
+  .chip {
+    border: 1px solid var(--line);
+    background: var(--chip);
+    color: var(--ink);
+    border-radius: 999px;
+    padding: 10px 16px;
+    min-height: 44px;
+    font-size: 14px; font-weight: 500;
+    cursor: pointer;
+    transition: background .15s, color .15s, transform .1s;
+  }
+  .chip:active { transform: scale(0.97); }
+  .chip.primary { background: var(--chip-active); color: var(--chip-active-ink); border-color: transparent; }
+
+  /* Visual action card */
+  .vcard {
+    margin-top: 10px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(28,28,26,0.05);
+    max-width: 280px;
+  }
+  .vcard-img {
+    height: 120px;
+    display: grid; place-items: center;
+    background: linear-gradient(145deg, #e8e6df, #f3f1eb);
+    font-size: 48px;
+  }
+  .vcard-body { padding: 14px 16px 8px; }
+  .vcard-title { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
+  .vcard-sub { font-size: 13px; color: var(--ink-soft); margin-top: 2px; }
+  .vcard-q { font-size: 14px; margin: 12px 16px 4px; color: var(--ink); font-weight: 500; }
+  .vcard .chips { padding: 8px 12px 14px; }
+
+  .done-card {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 10px 14px;
+    font-size: 14px; color: var(--green); font-weight: 560;
+    box-shadow: 0 1px 4px rgba(28,28,26,0.04);
+  }
+  .done-card svg { width: 16px; height: 16px; }
+
+  .status-line {
+    font-size: 13px; color: var(--ink-faint);
+    padding: 6px 4px 2px;
+    letter-spacing: -0.01em;
+    animation: fadein .2s ease;
+  }
+
+  /* Composer */
+  .composer-wrap {
+    flex: 0 0 auto;
+    padding: 8px 16px calc(14px + var(--safe-bottom));
+    background: linear-gradient(to top, var(--bg) 70%, transparent);
+  }
+  .composer {
+    display: flex; align-items: flex-end; gap: 8px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    padding: 6px 6px 6px 18px;
+    box-shadow: var(--shadow);
+    transition: box-shadow .2s, border-color .2s;
+  }
+  .composer.thinking {
+    animation: softpulse 1.6s ease-in-out infinite;
+  }
+  .composer input {
+    flex: 1; border: 0; outline: none; background: transparent;
+    font-size: 16px; line-height: 1.3; padding: 10px 0;
+    color: var(--ink); font-family: inherit;
+    min-height: 44px;
+  }
+  .composer input::placeholder { color: var(--ink-faint); }
+  .send {
+    width: 44px; height: 44px; border: 0; border-radius: 50%;
+    background: var(--accent); color: #fff;
+    display: grid; place-items: center; cursor: pointer;
+    flex: 0 0 auto;
+    transition: transform .12s, opacity .15s;
+  }
+  .send:disabled { opacity: 0.35; }
+  .send:not(:disabled):active { transform: scale(0.94); }
+  .send svg { width: 18px; height: 18px; }
+
+  /* Drawer / menu */
+  .scrim {
+    position: absolute; inset: 0; background: rgba(28,28,26,0.28);
+    opacity: 0; pointer-events: none; transition: opacity .25s;
+    z-index: 40;
+  }
+  .scrim.open { opacity: 1; pointer-events: auto; }
+  .drawer {
+    position: absolute; top: 0; left: 0; bottom: 0;
+    width: min(86%, 340px);
+    background: var(--surface);
+    border-right: 1px solid var(--line);
+    transform: translateX(-105%);
+    transition: transform .3s cubic-bezier(.2,.8,.2,1);
+    z-index: 50;
+    display: flex; flex-direction: column;
+    padding-top: var(--safe-top);
+    box-shadow: 8px 0 40px rgba(28,28,26,0.12);
+  }
+  .drawer.open { transform: translateX(0); }
+  .drawer-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 16px 8px 20px;
+  }
+  .drawer-head h2 {
+    margin: 0; font-size: 20px; font-weight: 650; letter-spacing: -0.03em;
+  }
+  .drawer-note {
+    padding: 0 20px 12px;
+    font-size: 13px; color: var(--ink-soft); line-height: 1.4;
+  }
+  .drawer-scroll {
+    flex: 1; overflow-y: auto; padding: 4px 14px 24px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .section-label {
+    font-size: 12px; font-weight: 600; color: var(--ink-faint);
+    letter-spacing: 0.04em; text-transform: uppercase;
+    margin: 14px 6px 8px;
+  }
+  .widget-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+  }
+  .wcard {
+    position: relative;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 14px 12px 12px;
+    min-height: 108px;
+    cursor: pointer;
+    transition: transform .12s, border-color .15s, background .15s;
+    text-align: left;
+    font-family: inherit; color: inherit;
+  }
+  .wcard:active { transform: scale(0.97); }
+  .wcard.on {
+    border-color: rgba(28,28,26,0.35);
+    background: #fff;
+    box-shadow: 0 2px 10px rgba(28,28,26,0.06);
+  }
+  .wcard .wi { font-size: 26px; margin-bottom: 10px; display: block; }
+  .wcard .wt { font-size: 14px; font-weight: 600; letter-spacing: -0.01em; }
+  .wcard .ws { font-size: 11px; color: var(--ink-soft); margin-top: 3px; line-height: 1.3; }
+  .wcard .badge {
+    position: absolute; top: 10px; right: 10px;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--accent); color: #fff;
+    display: none; place-items: center; font-size: 12px;
+  }
+  .wcard.on .badge { display: grid; }
+
+  .active-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 4px; }
+  .active-row {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--bg); border-radius: 12px; padding: 10px 12px;
+    border: 1px solid var(--line);
+  }
+  .active-row .h { cursor: grab; color: var(--ink-faint); font-size: 16px; padding: 4px; }
+  .active-row .n { flex: 1; font-size: 14px; font-weight: 500; }
+  .active-row .x {
+    width: 36px; height: 36px; border: 0; background: transparent;
+    border-radius: 10px; color: var(--ink-soft); cursor: pointer; font-size: 18px;
+  }
+  .active-row .x:active { background: var(--line); }
+
+  @keyframes softpulse {
+    0%, 100% { box-shadow: 0 8px 28px rgba(28,28,26,0.08); border-color: var(--line); }
+    50% { box-shadow: 0 8px 32px rgba(28,28,26,0.14); border-color: rgba(28,28,26,0.18); }
+  }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
+</style>
+</head>
+<body>
+<div class="phone" id="app">
+  <header class="topbar">
+    <button class="menu-btn" id="menuBtn" aria-label="Open menu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M4 7h16M4 12h16M4 17h16"/>
+      </svg>
+    </button>
+    <div class="brand">Aide</div>
+    <div style="width:44px"></div>
+  </header>
+
+  <main class="stage">
+    <div class="widgets-row" id="pins"></div>
+    <div class="feed" id="feed">
+      <div class="empty-state" id="empty">
+        <div class="hints">
+          <div class="hint">Try <em>“My internet is down”</em></div>
+          <div class="hint">or <em>“Book a haircut at 3”</em></div>
+          <div class="hint">or <em>“Remind me to grab dog food on the way home”</em></div>
+          <div class="hint">or <em>“Add weather”</em></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="scrim" id="scrim"></div>
+    <aside class="drawer" id="drawer" aria-hidden="true">
+      <div class="drawer-head">
+        <h2>Widgets</h2>
+        <button class="ghost-btn" id="closeMenu" aria-label="Close">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+      </div>
+      <p class="drawer-note">Pin what you want on the home screen. You can also just ask in chat — “add weather”, “remove timer”.</p>
+      <div class="drawer-scroll">
+        <div class="section-label" id="activeLabel" style="display:none">On home</div>
+        <div class="active-list" id="activeList"></div>
+        <div class="section-label">Gallery</div>
+        <div class="widget-grid" id="gallery"></div>
+      </div>
+    </aside>
+  </main>
+
+  <div class="composer-wrap">
+    <div id="statusSlot"></div>
+    <form class="composer" id="composer" autocomplete="off">
+      <input id="input" type="text" enterkeyhint="send" placeholder="Ask anything" aria-label="Message" />
+      <button class="send" id="send" type="submit" aria-label="Send" disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h12M13 6l6 6-6 6"/></svg>
+      </button>
+    </form>
+  </div>
+</div>
+
+<script>
+/* ========== Widget catalog ========== */
+const WIDGETS = [
+  { id:'weather',  icon:'☀️', name:'Weather',  sub:'Local conditions',
+    pin:()=>({title:'Weather', body:'68°', sub:'Sunny · NH'}) },
+  { id:'reminders',icon:'✓',  name:'Reminders',sub:'Next to-dos',
+    pin:()=>({title:'Reminders', body:'Dog food', sub:'On the way home'}) },
+  { id:'calendar', icon:'📅', name:'Calendar', sub:'Next event',
+    pin:()=>({title:'Up next', body:'Team sync', sub:'Today · 3:00 PM'}) },
+  { id:'timer',    icon:'⏱',  name:'Timer',    sub:'Quick countdown',
+    pin:()=>({title:'Timer', body:'25:00', sub:'Focus'}) },
+  { id:'notes',    icon:'📝', name:'Notes',    sub:'Scratch pad',
+    pin:()=>({title:'Notes', body:'Fiber specs…', sub:'3 notes'}) },
+  { id:'commute',  icon:'🚗', name:'Commute',  sub:'Home ↔ work',
+    pin:()=>({title:'Commute', body:'22 min', sub:'Via I-93 · light'}) },
+  { id:'photolist',icon:'📷', name:'Photo list',sub:'Visual checklist',
+    pin:()=>({title:'Photo list', body:'4 items', sub:'Groceries'}) },
+  { id:'news',     icon:'📰', name:'News',     sub:'Top headlines',
+    pin:()=>({title:'News', body:'3 stories', sub:'For you'}) },
+];
+
+/* ========== State ========== */
+const state = {
+  pins: [],                 // widget ids on home, ordered — blank by default
+  thinkingMode: 'pulse',    // 'pulse' | 'status' | 'off'
+  locationOk: false,
+  homeSet: false,
+  busy: false,
+  // Preferences the assistant learns from corrections (no settings screens)
+  learned: {
+    // e.g. haircut: 'pm' meaning haircuts are afternoons
+  },
+  pendingBooking: null,     // {kind, hour, meridiem} awaiting confirm/fix
+};
+
+const el = {
+  feed: document.getElementById('feed'),
+  empty: document.getElementById('empty'),
+  pins: document.getElementById('pins'),
+  input: document.getElementById('input'),
+  send: document.getElementById('send'),
+  composer: document.getElementById('composer'),
+  form: document.getElementById('composer'),
+  menuBtn: document.getElementById('menuBtn'),
+  drawer: document.getElementById('drawer'),
+  scrim: document.getElementById('scrim'),
+  closeMenu: document.getElementById('closeMenu'),
+  gallery: document.getElementById('gallery'),
+  activeList: document.getElementById('activeList'),
+  activeLabel: document.getElementById('activeLabel'),
+  statusSlot: document.getElementById('statusSlot'),
+};
+
+/* ========== Menu ========== */
+function openMenu() {
+  el.drawer.classList.add('open');
+  el.scrim.classList.add('open');
+  el.drawer.setAttribute('aria-hidden','false');
+  renderGallery();
+}
+function closeMenu() {
+  el.drawer.classList.remove('open');
+  el.scrim.classList.remove('open');
+  el.drawer.setAttribute('aria-hidden','true');
+}
+el.menuBtn.addEventListener('click', openMenu);
+el.closeMenu.addEventListener('click', closeMenu);
+el.scrim.addEventListener('click', closeMenu);
+
+function togglePin(id) {
+  const i = state.pins.indexOf(id);
+  if (i >= 0) state.pins.splice(i,1);
+  else state.pins.push(id);
+  renderPins();
+  renderGallery();
+}
+function removePin(id) {
+  state.pins = state.pins.filter(x => x !== id);
+  renderPins();
+  renderGallery();
+}
+function movePin(from, to) {
+  if (to < 0 || to >= state.pins.length) return;
+  const [x] = state.pins.splice(from,1);
+  state.pins.splice(to,0,x);
+  renderPins();
+  renderGallery();
+}
+
+function renderGallery() {
+  el.gallery.innerHTML = '';
+  WIDGETS.forEach(w => {
+    const on = state.pins.includes(w.id);
+    const b = document.createElement('button');
+    b.className = 'wcard' + (on ? ' on' : '');
+    b.type = 'button';
+    b.innerHTML = `<span class="badge">✓</span><span class="wi">${w.icon}</span><div class="wt">${w.name}</div><div class="ws">${w.sub}</div>`;
+    b.addEventListener('click', () => togglePin(w.id));
+    el.gallery.appendChild(b);
+  });
+  el.activeList.innerHTML = '';
+  el.activeLabel.style.display = state.pins.length ? '' : 'none';
+  state.pins.forEach((id, idx) => {
+    const w = WIDGETS.find(x => x.id === id);
+    const row = document.createElement('div');
+    row.className = 'active-row';
+    row.innerHTML = `<span class="h" title="Drag">☰</span><span class="n">${w.icon} ${w.name}</span><button class="x" aria-label="Remove">×</button>`;
+    row.querySelector('.x').addEventListener('click', () => removePin(id));
+    // simple reorder via buttons on long-press of handle: up/down
+    row.querySelector('.h').addEventListener('click', () => {
+      // cycle: move up one
+      movePin(idx, Math.max(0, idx-1));
+    });
+    el.activeList.appendChild(row);
+  });
+}
+
+function renderPins() {
+  el.pins.innerHTML = '';
+  state.pins.forEach((id, idx) => {
+    const w = WIDGETS.find(x => x.id === id);
+    const p = w.pin();
+    const card = document.createElement('div');
+    card.className = 'pin-card';
+    card.draggable = true;
+    card.dataset.id = id;
+    card.innerHTML = `<div class="pc-icon">${w.icon}</div><div class="pc-title">${p.title}</div><div class="pc-body">${p.body}</div><div class="pc-sub">${p.sub}</div>`;
+    // drag reorder on home
+    card.addEventListener('dragstart', e => {
+      card.classList.add('dragging');
+      e.dataTransfer.setData('text/plain', id);
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    card.addEventListener('dragend', () => card.classList.remove('dragging'));
+    card.addEventListener('dragover', e => { e.preventDefault(); });
+    card.addEventListener('drop', e => {
+      e.preventDefault();
+      const fromId = e.dataTransfer.getData('text/plain');
+      const from = state.pins.indexOf(fromId);
+      const to = state.pins.indexOf(id);
+      if (from >= 0 && to >= 0 && from !== to) movePin(from, to);
+    });
+    // long-press removes (mobile-friendly)
+    let t = null;
+    card.addEventListener('touchstart', () => {
+      t = setTimeout(() => { removePin(id); }, 650);
+    }, {passive:true});
+    card.addEventListener('touchend', () => clearTimeout(t));
+    card.addEventListener('touchmove', () => clearTimeout(t));
+    el.pins.appendChild(card);
+  });
+}
+
+/* ========== Chat UI ========== */
+function hideEmpty() {
+  if (el.empty) { el.empty.remove(); }
+}
+function scrollBottom() {
+  requestAnimationFrame(() => { el.feed.scrollTop = el.feed.scrollHeight; });
+}
+function addUser(text) {
+  hideEmpty();
+  const d = document.createElement('div');
+  d.className = 'msg user';
+  d.innerHTML = `<div class="bubble"></div>`;
+  d.querySelector('.bubble').textContent = text;
+  el.feed.appendChild(d);
+  scrollBottom();
+}
+function addBot(htmlOrText, isHtml=false) {
+  hideEmpty();
+  const d = document.createElement('div');
+  d.className = 'msg bot';
+  if (isHtml) d.innerHTML = htmlOrText;
+  else {
+    d.innerHTML = `<div class="bubble"></div>`;
+    d.querySelector('.bubble').textContent = htmlOrText;
+  }
+  el.feed.appendChild(d);
+  scrollBottom();
+  return d;
+}
+function addDone(label='Done') {
+  addBot(`<div class="done-card"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>${escapeHtml(label)}</div>`, true);
+}
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function setThinking(on, statusText) {
+  el.composer.classList.toggle('thinking', on && state.thinkingMode === 'pulse');
+  if (on && state.thinkingMode === 'status') {
+    el.statusSlot.innerHTML = `<div class="status-line">${escapeHtml(statusText || 'Thinking…')}</div>`;
+  } else {
+    el.statusSlot.innerHTML = '';
+  }
+}
+
+async function think(statusText, ms=700) {
+  if (state.thinkingMode === 'off') {
+    await wait(Math.min(ms, 280));
+    return;
+  }
+  setThinking(true, statusText);
+  await wait(ms);
+  setThinking(false);
+}
+function wait(ms){ return new Promise(r => setTimeout(r, ms)); }
+
+/* ========== Input ========== */
+el.input.addEventListener('input', () => {
+  el.send.disabled = !el.input.value.trim() || state.busy;
+});
+el.form.addEventListener('submit', async e => {
+  e.preventDefault();
+  const text = el.input.value.trim();
+  if (!text || state.busy) return;
+  el.input.value = '';
+  el.send.disabled = true;
+  await handle(text);
+});
+
+/* ========== Intent router (scripted) ========== */
+async function handle(raw) {
+  state.busy = true;
+  el.send.disabled = true;
+  addUser(raw);
+  const t = raw.toLowerCase().trim();
+
+  // --- Settings via chat (core principle) ---
+  if (/show what you.?re doing|show what you are doing|show status|status line/.test(t)) {
+    await think('Updating…', 400);
+    state.thinkingMode = 'status';
+    addDone('Done — I\'ll show a short status line');
+    state.busy = false; return;
+  }
+  if (/just show the answer|no status|hide status|quiet|turn (the )?indicator off|indicator off/.test(t)) {
+    await think('Updating…', 400);
+    state.thinkingMode = 'off';
+    addDone('Done — indicator off');
+    state.busy = false; return;
+  }
+  if (/soft pulse|subtle pulse|pulse (indicator|again)|default (thinking|indicator)/.test(t)) {
+    await think('Updating…', 400);
+    state.thinkingMode = 'pulse';
+    addDone('Done — soft pulse on the bubble');
+    state.busy = false; return;
+  }
+
+  // --- Widgets via chat ---
+  const addM = t.match(/^(?:add|pin|show)\s+(?:the\s+)?(.+?)(?:\s+widget)?$/);
+  const remM = t.match(/^(?:remove|hide|unpin)\s+(?:the\s+)?(.+?)(?:\s+widget)?$/);
+  if (addM) {
+    const id = matchWidget(addM[1]);
+    await think('Adding…', 450);
+    if (!id) { addBot('Which widget? Try weather, reminders, calendar, timer, notes, commute, photo list, or news.'); }
+    else if (state.pins.includes(id)) { addDone(`Done — ${WIDGETS.find(w=>w.id===id).name} is already on home`); }
+    else { state.pins.push(id); renderPins(); renderGallery(); addDone(`Done — added ${WIDGETS.find(w=>w.id===id).name}`); }
+    state.busy = false; return;
+  }
+  if (remM) {
+    const id = matchWidget(remM[1]);
+    await think('Updating…', 400);
+    if (!id) { addBot('Which widget should I remove?'); }
+    else if (!state.pins.includes(id)) { addBot(`${WIDGETS.find(w=>w.id===id).name} isn’t on your home screen.`); }
+    else { removePin(id); addDone(`Done — removed ${WIDGETS.find(w=>w.id===id).name}`); }
+    state.busy = false; return;
+  }
+
+  // --- Critique scenarios ---
+  if (/internet.*(down|out)|wifi.*(down|out)|no internet|connection.*(down|issue)/.test(t)) {
+    await think('Checking…', 650);
+    const node = addBot(`<div class="bubble">Let's sort it out. Look at your modem: are any lights red or blinking?</div>
+      <div class="chips">
+        <button class="chip" data-a="red">Red</button>
+        <button class="chip" data-a="blinking">Blinking</button>
+        <button class="chip" data-a="green">All green</button>
+      </div>`, true);
+    wireChips(node, async a => {
+      await think('Got it…', 500);
+      if (a === 'red') addBot('Power or signal issue. Unplug the modem for 30 seconds, plug it back in, then tell me what the lights do.');
+      else if (a === 'blinking') addBot('It’s trying to connect. Wait 2 minutes. If it keeps blinking, we’ll check the cable next.');
+      else addBot('Modem looks fine — so it’s likely the Wi-Fi or your device. Are you on Wi-Fi or ethernet?');
+    });
+    state.busy = false; return;
+  }
+
+  if (/cancel.*(order|it)|i want to cancel/.test(t)) {
+    await think('Finding your order…', 800);
+    const node = addBot(`<div class="bubble">Found this recent order.</div>
+      <div class="vcard">
+        <div class="vcard-img">👟</div>
+        <div class="vcard-body">
+          <div class="vcard-title">Trail Runner · Size 11</div>
+          <div class="vcard-sub">Order #48219 · Arrives Thu</div>
+        </div>
+        <div class="vcard-q">Cancel it?</div>
+        <div class="chips">
+          <button class="chip primary" data-a="yes">Yes, cancel</button>
+          <button class="chip" data-a="no">No, keep it</button>
+        </div>
+      </div>`, true);
+    wireChips(node, async a => {
+      await think(a==='yes' ? 'Canceling…' : 'Okay…', 500);
+      if (a === 'yes') addDone('Canceled — refund in 3–5 days');
+      else addBot('Kept. It’ll arrive Thursday.');
+    });
+    state.busy = false; return;
+  }
+
+  if (/dog food|remind me|on the way home|reminder/.test(t)) {
+    await think('Setting that up…', 600);
+    if (!state.locationOk || !state.homeSet) {
+      const node = addBot(`<div class="bubble">“On the way home” needs your location and a home address. One step:</div>
+        <div class="chips">
+          <button class="chip primary" data-a="loc">Allow location</button>
+          <button class="chip" data-a="home">Set home address</button>
+        </div>`, true);
+      wireChips(node, async a => {
+        if (a === 'loc') {
+          state.locationOk = true;
+          await think('…', 350);
+          if (state.homeSet) confirmReminder();
+          else addBot('Location on. Now set home — type an address, or tap below.', false),
+            addChipOnly([{a:'home', label:'Set home address', primary:true}], async () => {
+              state.homeSet = true; await think('…',300); confirmReminder();
+            });
+        } else {
+          state.homeSet = true;
+          await think('…', 350);
+          if (state.locationOk) confirmReminder();
+          else {
+            const n2 = addBot(`<div class="bubble">Home saved. One more — allow location so I can nudge you when you leave.</div>
+              <div class="chips"><button class="chip primary" data-a="loc">Allow location</button></div>`, true);
+            wireChips(n2, async () => { state.locationOk = true; await think('…',300); confirmReminder(); });
+          }
+        }
+      });
+    } else {
+      confirmReminder();
+    }
+    state.busy = false; return;
+  }
+
+  // --- Haircut booking: learn AM/PM, then flag conflicts ---
+  // "no, PM" / "pm" / "afternoon" corrections after a mistaken AM booking
+  if (state.pendingBooking && state.pendingBooking.kind === 'haircut' &&
+      (/^(no,?\s*)?(pm|p\.m\.|afternoon)s?$/.test(t) || /no,?\s*pm|not\s*am|afternoon/.test(t))) {
+    await think('Fixing…', 400);
+    state.learned.haircut = 'pm';
+    state.pendingBooking.meridiem = 'pm';
+    const h = state.pendingBooking.hour;
+    const label = `${h}:00 PM`;
+    state.pendingBooking = null;
+    addBot(`<div class="bubble">Fixed — ${label}.</div>
+      <div class="done-card" style="margin-top:8px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>Learned: haircuts are afternoons</div>`, true);
+    state.busy = false; return;
+  }
+  if (state.pendingBooking && state.pendingBooking.kind === 'haircut' &&
+      (/^(no,?\s*)?(am|a\.m\.|morning)s?$/.test(t) || /no,?\s*am|not\s*pm|morning/.test(t))) {
+    await think('Fixing…', 400);
+    state.learned.haircut = 'am';
+    state.pendingBooking.meridiem = 'am';
+    const h = state.pendingBooking.hour;
+    const label = `${h}:00 AM`;
+    state.pendingBooking = null;
+    addBot(`<div class="bubble">Fixed — ${label}.</div>
+      <div class="done-card" style="margin-top:8px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>Learned: haircuts are mornings</div>`, true);
+    state.busy = false; return;
+  }
+
+  const haircutM = t.match(/(?:book\s+(?:a\s+)?|schedule\s+(?:a\s+)?)?haircut(?:\s+at\s+(\d{1,2})(?::(\d{2}))?\s*(am|pm|a\.m\.|p\.m\.)?)?/);
+  if (haircutM && /haircut/.test(t)) {
+    let hour = haircutM[1] ? parseInt(haircutM[1], 10) : 3;
+    if (hour > 12) { // 24h form
+      const mer = hour >= 12 ? 'pm' : 'am';
+      hour = ((hour + 11) % 12) + 1;
+      await bookHaircut(hour, mer, true);
+      state.busy = false; return;
+    }
+    const explicit = haircutM[3] ? haircutM[3].replace(/\./g,'').toLowerCase() : null;
+
+    // Ambiguous hour with a learned preference that conflicts (e.g. learned PM, ask for 7)
+    if (!explicit && state.learned.haircut) {
+      const learned = state.learned.haircut;
+      // Ambiguous 1–11: ask if it conflicts with "always afternoon/morning" intuition
+      // Show conflict card whenever hour could be either and we've learned a side
+      await think('Checking…', 500);
+      const node = addBot(`<div class="bubble">You said ${hour} — and I learned haircuts are ${learned === 'pm' ? 'afternoons' : 'mornings'}.</div>
+        <div class="vcard">
+          <div class="vcard-body">
+            <div class="vcard-title">Sort this out</div>
+            <div class="vcard-sub">Haircut at ${hour}</div>
+          </div>
+          <div class="vcard-q">Which one?</div>
+          <div class="chips">
+            <button class="chip" data-a="am">${hour} AM</button>
+            <button class="chip" data-a="pm">${hour} PM</button>
+          </div>
+        </div>`, true);
+      wireChips(node, async a => {
+        await think('Booking…', 450);
+        state.learned.haircut = a; // reinforce
+        state.pendingBooking = null;
+        addDone(`Booked — haircut at ${hour}:00 ${a.toUpperCase()}`);
+      });
+      state.busy = false; return;
+    }
+
+    if (explicit) {
+      await bookHaircut(hour, explicit, true);
+      state.busy = false; return;
+    }
+
+    // First-time / no learning: deliberately book AM (the mistake Jeff wants to demo)
+    await think('Booking…', 650);
+    state.pendingBooking = { kind: 'haircut', hour, meridiem: 'am' };
+    const node = addBot(`<div class="bubble">Booked a haircut at ${hour}:00 AM.</div>
+      <div class="vcard">
+        <div class="vcard-img">✂</div>
+        <div class="vcard-body">
+          <div class="vcard-title">Haircut</div>
+          <div class="vcard-sub">Today · ${hour}:00 AM</div>
+        </div>
+        <div class="vcard-q">Look right?</div>
+        <div class="chips">
+          <button class="chip primary" data-a="ok">Looks good</button>
+          <button class="chip" data-a="pm">No, PM</button>
+        </div>
+      </div>`, true);
+    wireChips(node, async a => {
+      if (a === 'ok') {
+        await think('…', 300);
+        state.pendingBooking = null;
+        addDone(`Booked — ${hour}:00 AM`);
+      } else {
+        await think('Fixing…', 400);
+        state.learned.haircut = 'pm';
+        state.pendingBooking = null;
+        addBot(`<div class="bubble">Got it — ${hour}:00 PM.</div>
+          <div class="done-card" style="margin-top:8px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>Learned: haircuts are afternoons</div>`, true);
+      }
+    });
+    state.busy = false; return;
+  }
+
+  // Default: short, ask one question
+  await think('…', 550);
+  addBot('Got it. What’s the one thing you want help with right now?');
+  state.busy = false;
+}
+
+function confirmReminder() {
+  addBot(`<div class="done-card"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>Got it — I’ll remind you when you leave for home</div>`, true);
+}
+
+async function bookHaircut(hour, meridiem, confirmed) {
+  await think('Booking…', 500);
+  state.pendingBooking = null;
+  const m = meridiem.toUpperCase();
+  addDone(`Booked — haircut at ${hour}:00 ${m}`);
+}
+
+function matchWidget(name) {
+  const n = name.toLowerCase().replace(/[^a-z\s]/g,'').trim();
+  const map = {
+    'weather':'weather', 'reminders':'reminders', 'reminder':'reminders',
+    'calendar':'calendar', 'cal':'calendar', 'event':'calendar', 'next event':'calendar',
+    'timer':'timer', 'notes':'notes', 'note':'notes',
+    'commute':'commute', 'traffic':'commute',
+    'photo list':'photolist', 'photolist':'photolist', 'photos':'photolist', 'photo':'photolist', 'list':'photolist',
+    'news':'news', 'headlines':'news'
+  };
+  if (map[n]) return map[n];
+  // fuzzy contains
+  for (const w of WIDGETS) {
+    if (n.includes(w.id) || w.name.toLowerCase().includes(n) || n.includes(w.name.toLowerCase())) return w.id;
+  }
+  return null;
+}
+
+function wireChips(node, cb) {
+  node.querySelectorAll('.chip').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (state.busy) return;
+      state.busy = true;
+      node.querySelectorAll('.chip').forEach(b => b.disabled = true);
+      const a = btn.dataset.a;
+      addUser(btn.textContent.trim());
+      await cb(a);
+      state.busy = false;
+      el.send.disabled = !el.input.value.trim();
+    });
+  });
+}
+function addChipOnly(chips, cb) {
+  const html = `<div class="chips">${chips.map(c => `<button class="chip${c.primary?' primary':''}" data-a="${c.a}">${escapeHtml(c.label)}</button>`).join('')}</div>`;
+  const node = addBot(html, true);
+  wireChips(node, cb);
+}
+
+/* boot — always open to calm blank home */
+state.pins = [];
+state.pendingBooking = null;
+closeMenu();
+renderPins();
+renderGallery();
+// Don't steal focus on phones (avoids keyboard popping the blank calm screen)
+if (!('ontouchstart' in window)) el.input.focus();
+</script>
+</body>
+</html>
